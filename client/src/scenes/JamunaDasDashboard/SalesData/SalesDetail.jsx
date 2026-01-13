@@ -108,53 +108,61 @@ const SalesDetail = ({ selectedYear, selectedCompany }) => {
 
       <Grid container spacing={1}>
         <Grid item xs={12} md={12}>
-          <MonthlySales selectedYear={yearFilter} selectedCompany={company} />
+          <MonthlySales finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
 
       </Grid>
       <Grid container >
 
-        <Grid item xs={12} md={7}>
-          <QuarterSales selectedYear={yearFilter} selectedCompany={company} />
+        <Grid item xs={12} md={8}>
+          <QuarterSales finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
-        <Grid item xs={12} md={5}>
-          <YearlySales year={yearFilter} selectedCompany={company} />
-        </Grid>
-      </Grid>
-      <Grid container >
-
-        <Grid item xs={12} md={6}>
-          <CustomerTopTen selectedYear={yearFilter} selectedCompany={company} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <CustomerTopTenMonth selectedYear={yearFilter} selectedCompany={company} />
+        <Grid item xs={12} md={4}>
+          <YearlySales finYrData={finYrData} year={yearFilter} selectedCompany={company} />
         </Grid>
       </Grid>
       <Grid container >
 
         <Grid item xs={12} md={6}>
-          <CustomerTop10Week selectedYear={yearFilter} selectedCompany={company} />
+          <CustomerTopTen finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <CustomerTop10Daily selectedYear={yearFilter} selectedCompany={company} />
-        </Grid>
-      </Grid>
-      <Grid container >
-
-        <Grid item xs={12} md={6}>
-          <StyleTopTenYear selectedYear={yearFilter} selectedCompany={company} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <StyleTopTenMonth selectedYear={yearFilter} selectedCompany={company} />
+          <CustomerTopTenMonth finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
       </Grid>
       <Grid container >
 
         <Grid item xs={12} md={6}>
-          <StyleTop10Week selectedYear={yearFilter} selectedCompany={company} />
+          <CustomerTop10Week finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <StyleTop10Daily selectedYear={yearFilter} selectedCompany={company} />
+          <CustomerTop10Daily finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
+        </Grid>
+      </Grid>
+      <Grid container >
+
+        <Grid item xs={12} md={12}>
+          <StyleTopTenYear finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
+        </Grid>
+       
+      </Grid>
+      <Grid container >
+
+       
+        <Grid item xs={12} md={12}>
+          <StyleTopTenMonth finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company}  />
+        </Grid>
+      </Grid>
+
+
+
+      <Grid container >
+
+        <Grid item xs={12} md={6}>
+          <StyleTop10Week finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <StyleTop10Daily finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
         </Grid>
       </Grid>
 

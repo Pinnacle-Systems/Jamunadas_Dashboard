@@ -1,19 +1,31 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import HighchartsMore from "highcharts/highcharts-more";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenCustomerWeekQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 
+HighchartsMore(Highcharts);
+
+/* 🎨 Color palette */
 const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
-  "#B435E3", "#E35B5B", "#FFA500", "#800080",
-  "#00CED1", "#DC143C",
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#B435E3",
+  "#E35B5B",
+  "#FFA500",
+  "#800080",
+  "#00CED1",
+  "#DC143C",
 ];
 
 const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
   const theme = useTheme();
 
+  /* ---------------- Utils ---------------- */
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -26,152 +38,148 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     { skip: !selectedYear || !selectedCompany }
   );
 
-  /* ---------------- Normalize Data ---------------- */
+  /* ---------------- Normalize & Sort ---------------- */
   const chartData = useMemo(() => {
     if (!Array.isArray(response?.data)) return [];
 
-    return response.data.map((item, index) => ({
-      name: item.customer,
-      y: Number(item.totalSales),
-      customer: item.customer,
-      color: COLORS[index % COLORS.length],
-    }));
-  }, [response?.data]);
-  const top3Customers = useMemo(() => {
-    return chartData
-      .slice() // clone
+    return response.data
+      .map((item) => ({
+        customer: item.customer,
+        y: Number(item.totalSales),
+      }))
       .sort((a, b) => b.y - a.y)
-      .slice(0, 3);
-  }, [chartData]);
+      .slice(0, 10);
+  }, [response?.data]);
+
+  /* ---------------- Top 3 ---------------- */
+  const top3Customers = useMemo(() => chartData.slice(0, 3), [chartData]);
+
+  /* ---------------- Lollipop Data ---------------- */
+  const stemData = chartData.map((item, index) => ({
+    x: index,
+    low: 0,
+    high: item.y,
+    customer: item.customer,
+    color: COLORS[index % COLORS.length], // 🎨 stick color
+  }));
+
+  const dotData = chartData.map((item, index) => ({
+    x: index,
+    y: item.y,
+    customer: item.customer,
+    color: COLORS[index % COLORS.length], // 🎨 dot color (same)
+  }));
 
   /* ---------------- Chart Options ---------------- */
   const options = {
     chart: {
-      type: "line",   // 👈 smoother than line
-      scrollablePlotArea: { minWidth: 300 },
-      marginTop: 10,
+      type: "columnrange",
       height: 420,
+      marginTop: 30,
       borderRadius: 10,
+      backgroundColor: "transparent",
     },
 
+    title: null,
+    legend: { enabled: false },
+    credits: { enabled: false },
 
     xAxis: {
       min: 0,
       max: 9,
       tickInterval: 1,
-      
       labels: {
-        formatter: function () {
-           return this.value + 1; // 👈 show 10 → 1
+        formatter() {
+          return this.value + 1; // Rank 1–10
         },
-        style: { fontSize: "10px" },
+        style: { fontSize: "11px", fontWeight: 600 },
       },
-
       lineWidth: 1,
-      lineColor: "#000000", // ⚫ black axis
-      tickLength: 4,
-      tickColor: "#000000",
+      lineColor: "#000",
+      tickColor: "#000",
     },
-
-
 
     yAxis: {
       min: 0,
       visible: false,
-      gridLineWidth: 1,
-      gridLineColor: "#e0e0e0",
-      gridLineDashStyle: "Dash",
+      gridLineWidth: 0,
     },
 
-
+    /* 🧩 Tooltip with dynamic border color */
     tooltip: {
-      shared: false,
-      style: { fontSize: "12px" },
-      formatter: function () {
+      useHTML: true,
+      borderRadius: 6,
+      backgroundColor: "transparent",
+      shadow: false,
+      formatter() {
+        const value = this.y ?? this.point.high;
+        const color = this.point.color || "#000";
+
         return `
-        <b>Customer:</b> ${this.point.customer}<br/>
-        <b>Total Sales:</b> ${formatINR(this.y)}
-      `;
+          <div style="
+            border:2px solid ${color};
+        border-radius:8px;
+        padding:8px 10px;
+        background:#fff;
+        box-shadow:0 4px 10px rgba(0,0,0,0.15);
+        min-width:160px;
+          ">
+            <b>${this.point.customer}</b><br/>
+            Sales: <b>${formatINR(value)}</b>
+          </div>
+        `;
       },
     },
 
-    plotOptions: {
-      series: {
+    series: [
+      /* 🦯 STEM */
+      {
+        type: "columnrange",
+        data: stemData,
+        pointWidth: 6,
+        borderWidth: 0,
+        enableMouseTracking: true,
+        states: { inactive: { opacity: 1 } },
+      },
+
+      /* 🍭 DOT */
+      {
+        type: "scatter",
+        data: dotData,
         marker: {
-          enabled: true,
-          radius: 4,
           symbol: "circle",
+          radius: 6,
+          lineWidth: 2,
+          lineColor: "#ffffff",
         },
         dataLabels: {
           enabled: true,
           formatter() {
-            return formatINR(this.y); // 👈 show value on each point
+            return formatINR(this.y);
           },
+          y: -14,
           style: {
-            fontSize: "10px",
-            fontWeight: "600",
+            fontSize: "11px",
+            fontWeight: 600,
+            textOutline: "none",
           },
         },
-      },
-    },
-
-    title: null,
-
-    legend: { enabled: false },
-    credits: { enabled: false },
-
-    series: [
-      {
-        name: "Sales",
-        data: chartData.map((item, index) => ({
-          x: index,             // 👈 normal ascending
-          y: item.y,
-          customer: item.customer,
-        })),
-
-        color: "#FF0000",
-        lineWidth: 2,
-
-        states: {
-          inactive: { opacity: 1 },
-        },
-
-        marker: {
-          fillColor: "#000000", // ⚫ black dots
-          lineWidth: 2,
-          lineColor: "#ffffff",
-        },
+        states: { inactive: { opacity: 1 } },
       },
     ],
-
   };
 
-  /* ---------------- Render ---------------- */
-  // return (
-  //   <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
-  //     <CardHeader
-  //       title="Top 10 customer for last one week"
-  //       titleTypographyProps={{ sx: { fontSize: ".9rem", fontWeight: 600 } }}
-  //       sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
-  //     />
-
-  //     <CardContent>
-  //       <HighchartsReact highcharts={Highcharts} options={options} />
-  //     </CardContent>
-  //   </Card>
-  // );
   /* ---------------- Render ---------------- */
   return (
     <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
       <CardHeader
-        title="Top 10 customer for last one week"
+        title="Top 10 Customer – Last One Week"
         titleTypographyProps={{ sx: { fontSize: ".9rem", fontWeight: 600 } }}
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      {/* ⬇️ REPLACE CardContent WITH THIS */}
       <CardContent sx={{ position: "relative" }}>
-        {/* 🏆 Rank Badges */}
+        {/* 🏆 Top 3 Badges */}
         <div
           style={{
             position: "absolute",
@@ -192,14 +200,13 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
                 fontWeight: 600,
                 background:
                   index === 0
-                    ? "#FFD700" // 🥇 Gold
+                    ? "#FFD700"
                     : index === 1
-                      ? "#C0C0C0" // 🥈 Silver
-                      : "#CD7F32", // 🥉 Bronze
+                      ? "#C0C0C0"
+                      : "#CD7F32",
                 color: "#000",
                 boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
                 whiteSpace: "nowrap",
-                flexDirection:"column"
               }}
             >
               {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {item.customer}
@@ -207,12 +214,10 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
           ))}
         </div>
 
-        {/* 📊 Chart */}
         <HighchartsReact highcharts={Highcharts} options={options} />
       </CardContent>
     </Card>
   );
-
 };
 
 export default CustomerTop10Week;

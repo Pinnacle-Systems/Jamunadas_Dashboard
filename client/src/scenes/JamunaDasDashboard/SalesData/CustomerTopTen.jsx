@@ -57,7 +57,7 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
   const options = {
     chart: {
       type: "column",
-      height: 420,
+      height: 440,
     },
 
     title: { text: "" },

@@ -9,27 +9,26 @@ import {
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { useSelector } from "react-redux";
 
-import { useGetMisDashboardErpMonthWiseBreakUPQuery } from
-    "../../../../redux/service/misDashboardServiceERP";
+import { useGetMonthlySalesTableQuery } from
+    "../../../../redux/service/jamunasDashboardService";
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
+import FinYear from "../../../../components/FinYear";
 const MonthWiseTable = ({
-    month,
-    finYr,
-    closeTable, filterBuyerList
+    year, month, company, closeTable, finYrData
 }) => {
-    const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
+
+    console.log(year, month, company, closeTable, finYrData, "receivedparams")
+
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
         max: Infinity,
     });
-    const { selectedYear, filterBuyer: companyName } =
-        useSelector((state) => state.dashboardFilters);
-    const [localCompany, setLocalCompany] = useState(companyName || "ALL");
-    const [localYear, setLocalYear] = useState(selectedYear);
+    const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
+    const [localCompany, setLocalCompany] = useState(company || "ALL");
+    const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -37,78 +36,76 @@ const MonthWiseTable = ({
 
     // ✅ API CALL INSIDE TABLE
     const { data: response, isLoading } =
-        useGetMisDashboardErpMonthWiseBreakUPQuery(
+        useGetMonthlySalesTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: localYear,
+                    month: selectedMonth
                 },
             },
             { skip: !localYear }
         );
 
     const rawData = useMemo(() => {
-        return Array.isArray(response?.data) ? response?.data : [];
+        return Array.isArray(response?.data) ? response.data : [];
     }, [response?.data]);
 
     console.log(rawData, "rawData");
-    const customerOptions = useMemo(() => {
-        const unique = [...new Set(rawData?.map(r => r.month))];
 
-        return [
-            { label: "ALL", value: "ALL" },
-            ...unique.map(c => ({ label: c, value: c })),
-        ];
-    }, [rawData]);
 
 
     // ✅ FILTERING
     const filteredData = useMemo(() => {
         return rawData.filter((row) => {
             // 🔹 Customer dropdown filter
-            if (selectedMonth !== "ALL" && row.month !== selectedMonth) {
-                return false;
-            }
+
 
             // 🔹 Search filter (month search)
-            if (search.month) {
-                const rowCustomer = row.month?.toLowerCase() || "";
-                if (!rowCustomer.includes(search.month.toLowerCase())) {
+            if (search.docId) {
+                const rowdocId = row.docId?.toLowerCase() || "";
+                if (!rowdocId.includes(search.docId.toLowerCase())) {
                     return false;
                 }
             }
-            if (search.orderNo) {
-                const rowOrderNo = row.orderNo?.toString().toLowerCase() || "";
-                if (!rowOrderNo.includes(search.orderNo.toLowerCase())) {
+            if (search.salesType) {
+                const rowsalesType = row.salesType?.toString().toLowerCase() || "";
+                if (!rowsalesType.includes(search.salesType.toLowerCase())) {
                     return false;
                 }
             }
             // 🔹 Style Ref No search
-            if (search.styleRefNo) {
-                const rowStyle = row.styleRefNo?.toLowerCase() || "";
-                if (!rowStyle.includes(search.styleRefNo.toLowerCase())) {
+            if (search.customer) {
+                const rowcustomer = row.customer?.toLowerCase() || "";
+                if (!rowcustomer.includes(search.customer.toLowerCase())) {
+                    return false;
+                }
+            }
+            if (search.itemName) {
+                const rowitemName = row.itemName?.toLowerCase() || "";
+                if (!rowitemName.includes(search.itemName.toLowerCase())) {
                     return false;
                 }
             }
 
             // 🔹 Min / Max Turnover filter
-            const value = Number(row.value || 0);
+            const value = Number(row.amount || 0);
 
             if (value < netpayRange.min) return false;
             if (netpayRange.max !== Infinity && value > netpayRange.max) return false;
 
             return true;
         });
-    }, [rawData, selectedMonth, search, netpayRange]);
+    }, [rawData, search, netpayRange]);
 
 
-    // useEffect(() => {
-    //     setSelectedMonth(month || "ALL");
-    //     setCurrentPage(1);
-    // }, [month]);
     useEffect(() => {
-        setLocalCompany(companyName || "ALL");
-    }, [companyName]);
+        setSelectedMonth(month || "ALL");
+        setCurrentPage(1);
+    }, [month]);
+    useEffect(() => {
+        setLocalCompany(company || "ALL");
+    }, [company]);
 
 
     // ✅ TOTAL
@@ -260,12 +257,12 @@ const MonthWiseTable = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
-            <div className="bg-white w-[1300px] h-[630px] p-4 rounded-xl relative">
+            <div className="bg-white w-[1350px] h-[630px] p-4 rounded-xl relative">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
                     <h2 className="font-bold uppercase">
-                        Month Wise Turnover - <span className="text-blue-600 ">{localCompany || ""}</span>
+                        Month Wise Sales - <span className="text-blue-600 ">{localCompany || ""}</span>
                     </h2>
 
                     <div className="flex gap-2 items-center">
@@ -285,7 +282,7 @@ const MonthWiseTable = ({
                                         Select Year
                                     </option>
 
-                                    {finYr?.data?.map((y) => (
+                                    {finYrData?.data?.map((y) => (
                                         <option key={y.finYear} value={y.finYear}>
                                             {y.finYear}
                                         </option>
@@ -302,30 +299,18 @@ const MonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"    >
 
-                                    {filterBuyerList?.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.compname}
-                                        </option>
-                                    ))}
+                                    <option value="HVM">HVM</option>
+
                                 </select>
                             </div>
 
                             <div className="w-40">
-                                <select
-                                    value={selectedMonth}
-                                    onChange={(e) => {
-                                        setSelectedMonth(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="w-full px-2 py-1 text-xs border-2   rounded-md 
-      border-blue-600 transition-all duration-200"     >
-
-                                    {customerOptions?.map((c) => (
-                                        <option key={c.value} value={c.value}>
-                                            {c.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                <FinYear
+                                    showBorder={true}
+                                    selectedYear={localYear}
+                                    selectmonths={selectedMonth}
+                                    setSelectmonths={setSelectedMonth}
+                                />
                             </div>
 
 
@@ -350,7 +335,7 @@ const MonthWiseTable = ({
 
                 <div className="flex justify-between items-start mt-2">
                     <div className="flex gap-x-4 mb-3">
-                        {["month", "orderNo", "styleRefNo"].map((key) => (
+                        {["docId", "salesType", "customer","itemName"].map((key) => (
                             <div key={key} className="relative">
                                 <input
                                     type="text"
@@ -415,19 +400,20 @@ const MonthWiseTable = ({
                 </div>
                 {/* TABLE */}
                 <div className="grid  gap-4">
-                    <div className="overflow-x-auto max-h-[470px] " style={{ border: "1px solid gray", borderRadius: "16px" }}>
+                    <div className="overflow-x-auto h-[470px] " style={{ border: "1px solid gray", borderRadius: "16px" }}>
                         <table className="w-full border-collapse border border-gray-300 text-[11px] table-fixed">
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
-                                    <th className="border p-1 text-center w-6">S.No</th>
+                                    <th className="border p-1 text-center w-4">S.No</th>
                                     <th className="border p-1 text-center w-16">Month</th>
-                                    <th className="border p-1 text-center w-20">Order No</th>
-                                    <th className="border p-1 text-center w-12">Order Date</th>
-                                    <th className="border p-1 text-center w-32">Style Ref No</th>
-                                    <th className="border p-1 text-center w-16">Order Qty</th>
-                                    <th className="border p-1 text-center w-8">UOM</th>
-
-                                    <th className="border p-1 text-center w-12">Turnover</th>
+                                    <th className="border p-1 text-center w-20">Doc No</th>
+                                    <th className="border p-1 text-center w-[40px]">Doc Date</th>
+                                    <th className="border p-1 text-center w-12">Sales Type</th>
+                                    <th className="border p-1 text-center w-32">Customer</th>
+                                    <th className="border p-1 text-center w-32">Item Name</th>
+                                    <th className="border p-1 text-center w-12">Invoice Qty</th>
+                                    <th className="border p-1 text-center w-8">Rate</th>
+                                    <th className="border p-1 text-center w-12">Amount</th>
 
                                 </tr>
                             </thead>
@@ -435,7 +421,7 @@ const MonthWiseTable = ({
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan={8} className="h-[300px] text-center">
-                                            <div className="flex justify-center items-center">
+                                            <div className="flex justify-center items-center pointer-events-none">
                                                 <SpinLoader />
                                             </div>
                                         </td>
@@ -450,15 +436,7 @@ const MonthWiseTable = ({
                                     currentRecords?.map((row, index) => {
                                         const globalIndex = index;  // 0–16
                                         const serialNo = (currentPage - 1) * recordsPerPage + globalIndex + 1;
-                                        const uomType = row?.orderUOM
-                                        let orderQtyValue;
-                                        if (uomType == "KGS") {
-                                            orderQtyValue = row?.orderQty.tofixed(3)
-                                        }
-                                        else {
-                                            orderQtyValue = row?.orderQty
 
-                                        }
                                         return (
                                             <tr
                                                 key={index}
@@ -466,17 +444,20 @@ const MonthWiseTable = ({
                                             >
                                                 <td className="border p-1 text-center">{serialNo}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.month}</td>
-                                                <td className="border p-1 pl-2 text-left ">{row.orderNo}</td>
-                                                <td className="border p-1 pl-2 text-left ">{row.orderDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
-                                                <td className="border p-1 pl-2 text-left">{row.styleRefNo}</td>
-                                                <td className="border p-1 pr-2 text-right">{orderQtyValue}</td>
-                                                <td className="border p-1 pl-2 text-leftt">{row.orderUOM}</td>
+                                                <td className="border p-1 pl-2 text-left">{row.docId}</td>
+
+                                                <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
+                                                <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
+                                                <td className="border p-1 pr-2 text-left">{row.customer}</td>
+                                                <td className="border p-1 pr-2 text-left">{row.itemName}</td>
+                                                <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pr-2 text-right">{row.rate}</td>
 
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">
                                                     {new Intl.NumberFormat("en-IN", {
                                                         style: "currency",
                                                         currency: "INR",
-                                                    }).format(row.value)}
+                                                    }).format(row.amount)}
                                                 </td>
                                             </tr>
                                         );

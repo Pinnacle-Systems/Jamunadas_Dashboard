@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { Box, Card, CardContent, CardHeader, useTheme } from "@mui/material";
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from "highcharts";
+import YearlyTable from "../SalesData/TableData/Yeartable.jsx";
 
 import { useGetYearlySalesQuery } from "../../../redux/service/jamunasDashboardService.js";
 
-const YearlySales = ({ selectedCompany, year }) => {
+const YearlySales = ({ selectedCompany, year, finYrData }) => {
     const [xdata, setXdata] = useState([]);
     const [ydata, setYdata] = useState([]);
     const theme = useTheme();
     const [showTable, setShowTable] = useState(false);
-    const [selectedCompanyData, setSelectedCompanyData] = useState(null);
+    const [tableParams, setTableParams] = useState(null);
 
     const { data: response, isLoading } = useGetYearlySalesQuery({
         params: { selectedCompany, year },
@@ -67,25 +68,35 @@ const YearlySales = ({ selectedCompany, year }) => {
         plotOptions: {
             column: {
                 depth: 25,
-                colorByPoint: true,
+                colorByPoint: false,
                 borderRadius: 5,
             },
             series: {
                 point: {
                     events: {
                         click: function () {
-                            setSelectedCompanyData({ company: this.category });
+                            setTableParams({
+                                company: this.category, // 👈 clicked bar company
+                                year: year,             // 👈 selected year
+                            });
                             setShowTable(true);
                         },
                     },
                 },
             },
         },
-        colors: colorArray,
         series: [
             {
                 name: "Sales",
                 data: ydata,
+                color: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+
+                        [0, "#6f00ff"],   // bottom
+                        [1, "#5e55af"],   // top
+                    ],
+                },
                 dataLabels: {
                     enabled: true,
                     formatter() { return formatINR(this.y); },
@@ -93,6 +104,7 @@ const YearlySales = ({ selectedCompany, year }) => {
                 },
             },
         ],
+
     };
 
     return (
@@ -109,13 +121,14 @@ const YearlySales = ({ selectedCompany, year }) => {
                 )}
             </CardContent>
 
-            {/* Table can be added here */}
-            {/* {showTable && selectedCompanyData && (
-        <YearWiseTable
-          company={selectedCompanyData.company}
-          closeTable={() => setShowTable(false)}
-        />
-      )} */}
+            {showTable && (
+                <YearlyTable
+                    company={tableParams.company}
+                    year={tableParams.year}
+                    finYrData={finYrData}
+                    closeTable={() => setShowTable(false)}
+                />
+            )}
         </Card>
     );
 };

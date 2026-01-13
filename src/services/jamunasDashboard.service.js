@@ -66,6 +66,7 @@ export async function getMonthlySales(req, res) {
             `
       SELECT 
         e.payperiod,
+           d.finyr,
         c.compcode,
         SUM(b.delqty * a.netamt) AS totalsales
       FROM gtsalesinv a
@@ -85,6 +86,7 @@ export async function getMonthlySales(req, res) {
 
         const resp = result.map((sale) => ({
             payPeriod: sale.payperiod,
+            finYear:sale.finyr,
             totalSales: sale.totalsales,
             company: sale.compcode,
         }));
@@ -259,7 +261,7 @@ limit 10
 
         const resp = result.map((sale) => ({
             salesYear: sale.payperiod,
-            
+
             company: sale.compcode,
             customer: sale.customer,
             totalSales: sale.totalsales,

@@ -12,10 +12,11 @@ import {
 import { useGetMonthlySalesQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 
-import MonthWiseTable from "../salarydata/TableData/MonthWiseTable";
+import MonthWiseTable from "../SalesData/TableData/MonthTable.jsx";
 
-const MonthlySales = ({ selectedYear, selectedCompany }) => {
+const MonthlySales = ({ selectedYear, selectedCompany ,finYrData}) => {
   const theme = useTheme();
+  const [tableParams, setTableParams] = useState(null);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [showTable, setShowTable] = useState(false);
@@ -37,8 +38,9 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
     if (!Array.isArray(response?.data)) return [];
 
     return response.data.map((item) => ({
-      month: item.payPeriod,                // 👈 FIXED
-      value: Number(item.totalSales),        // 👈 FIXED
+      month: item.payPeriod,
+      finYear: item.finyr,
+      value: Number(item.totalSales),
       company: item.company,
     }));
   }, [response?.data]);
@@ -92,8 +94,8 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
               return formatINR(this.y);
             },
             style: {
-              fontSize: "11px",
-              fontWeight: "400",
+              fontSize: "12px",
+              fontWeight: "600",
               color: "#000",
             },
           },
@@ -120,7 +122,7 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
         {
           name: "Sales",
           data: seriesData,
-          color: "#0088FE",
+          color: "#00fe6a",
         },
       ],
 
@@ -176,15 +178,21 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
           },
           style: {
             fontSize: "11px",
-            fontWeight: "400",
+            fontWeight: "600",
             color: "#000",
           },
         },
         point: {
           events: {
             click() {
+              setTableParams({
+                year: selectedYear,
+                month: selectedMonth,
+                company: selectedCompany,
+              });
               setShowTable(true);
             },
+
           },
         },
       },
@@ -193,10 +201,21 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
     series: [
       {
         name: "Sales",
-        data: [selectedMonthData?.value ?? 0],
-        color: "#00C49F",
+        data: [
+          {
+            y: selectedMonthData?.value ?? 0,
+            color: {
+              linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+              stops: [
+                [0, "#05fdd0"],     // top
+                [1, "#045f48"],     // bottom
+              ],
+            },
+          },
+        ],
       },
     ],
+
 
     legend: { enabled: false },
     credits: { enabled: false },
@@ -275,13 +294,19 @@ const MonthlySales = ({ selectedYear, selectedCompany }) => {
       </CardContent>
 
       {/* Table */}
-      {showTable && (
+      {showTable && tableParams && (
         <MonthWiseTable
-          companyName={selectedCompany}
-          month={selectedMonth}
-          closeTable={() => setShowTable(false)}
+          year={tableParams.year}
+          month={tableParams.month}
+          company={tableParams.company}
+          finYrData={finYrData}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
         />
       )}
+
     </Card>
   );
 };

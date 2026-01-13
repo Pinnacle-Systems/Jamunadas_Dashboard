@@ -49,7 +49,7 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
   const options = {
     chart: {
       type: "pie",
-      height: 420,
+      height: 440,
       options3d: {
         enabled: true,
         alpha: 45,
