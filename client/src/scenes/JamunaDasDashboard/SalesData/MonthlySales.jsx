@@ -45,6 +45,14 @@ const MonthlySales = ({ selectedYear, selectedCompany ,finYrData}) => {
     }));
   }, [response?.data]);
 
+  /* ---------------- Month Dropdown Options ---------------- */
+const monthOptions = useMemo(() => {
+  if (!Array.isArray(chartData)) return [];
+  return chartData.map(item => item.month);
+}, [chartData]);
+
+console.log(monthOptions,"monthOptions");
+
   /* ---------------- Reset on Props Change ---------------- */
   useEffect(() => {
     setSelectedMonth(null);
@@ -299,6 +307,7 @@ const MonthlySales = ({ selectedYear, selectedCompany ,finYrData}) => {
           year={tableParams.year}
           month={tableParams.month}
           company={tableParams.company}
+          monthOptions={monthOptions}
           finYrData={finYrData}
           closeTable={() => {
             setShowTable(false);

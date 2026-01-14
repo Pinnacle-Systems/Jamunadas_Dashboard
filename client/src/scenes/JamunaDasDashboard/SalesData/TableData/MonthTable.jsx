@@ -17,7 +17,7 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 const MonthWiseTable = ({
-    year, month, company, closeTable, finYrData
+    year, month, company, closeTable, finYrData, monthOptions
 }) => {
 
     console.log(year, month, company, closeTable, finYrData, "receivedparams")
@@ -305,13 +305,25 @@ const MonthWiseTable = ({
                             </div>
 
                             <div className="w-40">
-                                <FinYear
-                                    showBorder={true}
-                                    selectedYear={localYear}
-                                    selectmonths={selectedMonth}
-                                    setSelectmonths={setSelectedMonth}
-                                />
+                                <select
+                                    value={selectedMonth || "ALL"}
+                                    onChange={(e) => {
+                                        setSelectedMonth(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border-2 rounded-md
+               border-blue-600 transition-all duration-200"
+                                >
+                                    <option value="ALL">ALL</option>
+
+                                    {monthOptions?.map((m) => (
+                                        <option key={m} value={m}>
+                                            {m}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
+
 
 
 
@@ -335,7 +347,7 @@ const MonthWiseTable = ({
 
                 <div className="flex justify-between items-start mt-2">
                     <div className="flex gap-x-4 mb-3">
-                        {["docId", "salesType", "customer","itemName"].map((key) => (
+                        {["docId", "salesType", "customer", "itemName"].map((key) => (
                             <div key={key} className="relative">
                                 <input
                                     type="text"
@@ -448,7 +460,7 @@ const MonthWiseTable = ({
 
                                                 <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
-                                                <td className="border p-1 pr-2 text-left">{row.customer}</td>
+                                                <td className="border p-1 pr-2 capitalize text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.rate}</td>

@@ -84,7 +84,11 @@ const QuarterSales = ({ selectedYear, selectedCompany, finYrData
 
     return { categories, quarterAxis, data };
   }, [response?.data]);
-
+  /* ---------------- Month Dropdown Options ---------------- */
+const monthOptions = useMemo(() => {
+  if (!Array.isArray(chartData)) return [];
+  return chartData.map(item => item.month);
+}, [chartData]);
   /* ---------- CHART OPTIONS ---------- */
   const options = {
     chart: {
