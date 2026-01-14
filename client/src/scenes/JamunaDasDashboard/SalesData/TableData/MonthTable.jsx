@@ -336,7 +336,7 @@ const MonthWiseTable = ({
 
                 {/* TOTAL */}
                 <p className="text-xs font-semibold  text-gray-600">
-                    Total Turnover :{" "}
+                    Total amount :{" "}
                     {new Intl.NumberFormat("en-IN", {
                         style: "currency",
                         currency: "INR",
@@ -367,7 +367,7 @@ const MonthWiseTable = ({
                     </div>
                     <div className=" flex gap-x-2">
                         <div className="flex items-center text-[12px]">
-                            <span className="text-gray-500">Min Turnover : </span>
+                            <span className="text-gray-500">Min amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.min}
@@ -382,7 +382,7 @@ const MonthWiseTable = ({
                         </div>
 
                         <div className="flex items-center  text-[12px]">
-                            <span className="text-gray-500">Max Turnover : </span>
+                            <span className="text-gray-500">Max amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.max === Infinity ? "" : netpayRange.max}
