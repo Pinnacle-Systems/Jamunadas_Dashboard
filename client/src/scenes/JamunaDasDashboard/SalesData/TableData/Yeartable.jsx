@@ -17,10 +17,10 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 const YearlyTable = ({
-    year,  company, closeTable, finYrData
+    year, company, closeTable, finYrData
 }) => {
 
-    console.log(year,  company, closeTable, finYrData, "receivedparams")
+    console.log(year, company, closeTable, finYrData, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
@@ -97,7 +97,7 @@ const YearlyTable = ({
     }, [rawData, search, netpayRange]);
 
 
-  
+
     useEffect(() => {
         setLocalCompany(company || "ALL");
     }, [company]);
@@ -257,7 +257,7 @@ const YearlyTable = ({
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
                     <h2 className="font-bold uppercase">
-                        Month Wise Sales - <span className="text-blue-600 ">{localCompany || ""}</span>
+                        Year Wise Sales - <span className="text-blue-600 ">{localCompany || ""}</span>
                     </h2>
 
                     <div className="flex gap-2 items-center">
@@ -299,7 +299,7 @@ const YearlyTable = ({
                                 </select>
                             </div>
 
-                      
+
 
 
 
@@ -312,7 +312,7 @@ const YearlyTable = ({
 
                 {/* TOTAL */}
                 <p className="text-xs font-semibold  text-gray-600">
-                    Total Turnover :{" "}
+                    Total Amount :{" "}
                     {new Intl.NumberFormat("en-IN", {
                         style: "currency",
                         currency: "INR",
@@ -323,7 +323,7 @@ const YearlyTable = ({
 
                 <div className="flex justify-between items-start mt-2">
                     <div className="flex gap-x-4 mb-3">
-                        {["docId", "salesType", "customer","itemName"].map((key) => (
+                        {["docId", "salesType", "customer", "itemName"].map((key) => (
                             <div key={key} className="relative">
                                 <input
                                     type="text"
@@ -343,7 +343,7 @@ const YearlyTable = ({
                     </div>
                     <div className=" flex gap-x-2">
                         <div className="flex items-center text-[12px]">
-                            <span className="text-gray-500">Min Turnover : </span>
+                            <span className="text-gray-500">Min amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.min}
@@ -358,7 +358,7 @@ const YearlyTable = ({
                         </div>
 
                         <div className="flex items-center  text-[12px]">
-                            <span className="text-gray-500">Max Turnover : </span>
+                            <span className="text-gray-500">Max amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.max === Infinity ? "" : netpayRange.max}
@@ -400,6 +400,8 @@ const YearlyTable = ({
                                     <th className="border p-1 text-center w-32">Customer</th>
                                     <th className="border p-1 text-center w-32">Item Name</th>
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
+                                    <th className="border p-1 text-center w-8">UOM</th>
+
                                     <th className="border p-1 text-center w-8">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
@@ -408,7 +410,7 @@ const YearlyTable = ({
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={8} className="h-[300px] text-center">
+                                        <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
                                                 <SpinLoader />
                                             </div>
@@ -439,6 +441,8 @@ const YearlyTable = ({
                                                 <td className="border p-1 pr-2 text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pl-2 text-left">{row.uom}</td>
+
                                                 <td className="border p-1 pr-2 text-right">{row.rate}</td>
 
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">

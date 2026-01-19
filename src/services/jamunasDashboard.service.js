@@ -86,7 +86,7 @@ export async function getMonthlySales(req, res) {
 
         const resp = result.map((sale) => ({
             payPeriod: sale.payperiod,
-            finYear:sale.finyr,
+            finYear: sale.finyr,
             totalSales: sale.totalsales,
             company: sale.compcode,
         }));
@@ -261,6 +261,7 @@ limit 10
 
         const resp = result.map((sale) => ({
             salesYear: sale.payperiod,
+            fiYear: sale.finyr,
 
             company: sale.compcode,
             customer: sale.customer,

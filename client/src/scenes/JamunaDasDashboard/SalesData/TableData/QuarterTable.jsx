@@ -17,7 +17,7 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
-    year, quarter, company, closeTable, finYrData
+    year, quarter, company, closeTable, finYrData, quarterOptions
 }) => {
 
     console.log(year, quarter, company, closeTable, finYrData, "receivedparams")
@@ -262,7 +262,7 @@ const QuarterWiseTable = ({
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
                     <h2 className="font-bold uppercase">
-                        Month Wise Sales - <span className="text-blue-600 ">{localCompany || ""}</span>
+                        Quarter Wise Sales - <span className="text-blue-600 ">{localCompany || ""}</span>
                     </h2>
 
                     <div className="flex gap-2 items-center">
@@ -304,15 +304,34 @@ const QuarterWiseTable = ({
                                 </select>
                             </div>
 
+
                             <div className="w-40">
+                                <select
+                                    value={selectedQuarter || "ALL"}
+                                    onChange={(e) => {
+                                        setSelectedQuarter(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border-2 rounded-md
+               border-blue-600 transition-all duration-200"
+                                >
+                                    <option value="ALL">ALL</option>
+
+                                    {quarterOptions?.map((m) => (
+                                        <option key={m} value={m}>
+                                            {m}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            {/* <div className="w-40">
                                 <FinYear
                                     showBorder={true}
                                     selectedYear={localYear}
                                     selectmonths={selectedQuarter}
                                     setSelectmonths={setSelectedQuarter}
                                 />
-                            </div>
-
+                            </div> */}
 
 
                         </div>
@@ -324,7 +343,7 @@ const QuarterWiseTable = ({
 
                 {/* TOTAL */}
                 <p className="text-xs font-semibold  text-gray-600">
-                    Total Turnover :{" "}
+                    Total Amount :{" "}
                     {new Intl.NumberFormat("en-IN", {
                         style: "currency",
                         currency: "INR",
@@ -335,7 +354,7 @@ const QuarterWiseTable = ({
 
                 <div className="flex justify-between items-start mt-2">
                     <div className="flex gap-x-4 mb-3">
-                        {["docId", "salesType", "customer","itemName"].map((key) => (
+                        {["docId", "salesType", "customer", "itemName"].map((key) => (
                             <div key={key} className="relative">
                                 <input
                                     type="text"
@@ -355,7 +374,7 @@ const QuarterWiseTable = ({
                     </div>
                     <div className=" flex gap-x-2">
                         <div className="flex items-center text-[12px]">
-                            <span className="text-gray-500">Min Turnover : </span>
+                            <span className="text-gray-500">Min Amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.min}
@@ -370,7 +389,7 @@ const QuarterWiseTable = ({
                         </div>
 
                         <div className="flex items-center  text-[12px]">
-                            <span className="text-gray-500">Max Turnover : </span>
+                            <span className="text-gray-500">Max Amount : </span>
                             <input
                                 type="text"
                                 value={netpayRange.max === Infinity ? "" : netpayRange.max}
@@ -407,11 +426,13 @@ const QuarterWiseTable = ({
                                     <th className="border p-1 text-center w-4">S.No</th>
                                     <th className="border p-1 text-center w-16">Quarter</th>
                                     <th className="border p-1 text-center w-20">Doc No</th>
-                                    <th className="border p-1 text-center w-[40px]">Doc Date</th>
+                                    <th className="border p-1 text-center w-[45px]">Doc Date</th>
                                     <th className="border p-1 text-center w-12">Sales Type</th>
                                     <th className="border p-1 text-center w-32">Customer</th>
                                     <th className="border p-1 text-center w-32">Item Name</th>
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
+                                    <th className="border p-1 text-center w-8">UOM</th>
+
                                     <th className="border p-1 text-center w-8">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
@@ -420,7 +441,7 @@ const QuarterWiseTable = ({
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={8} className="h-[300px] text-center">
+                                        <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
                                                 <SpinLoader />
                                             </div>
@@ -451,6 +472,8 @@ const QuarterWiseTable = ({
                                                 <td className="border p-1 pr-2 text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pl-2 text-left">{row.uom}</td>
+
                                                 <td className="border p-1 pr-2 text-right">{row.rate}</td>
 
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">

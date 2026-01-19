@@ -14,11 +14,13 @@ import { useGetMonthlySalesQuery } from
 
 import MonthWiseTable from "../SalesData/TableData/MonthTable.jsx";
 
-const MonthlySales = ({ selectedYear, selectedCompany ,finYrData}) => {
+const MonthlySales = ({ selectedYear, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [tableParams, setTableParams] = useState(null);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedChildYear, setSelectedChildYear] = useState(null);
+
   const [showTable, setShowTable] = useState(false);
 
   /* ---------------- INR Formatter ---------------- */
@@ -46,12 +48,12 @@ const MonthlySales = ({ selectedYear, selectedCompany ,finYrData}) => {
   }, [response?.data]);
 
   /* ---------------- Month Dropdown Options ---------------- */
-const monthOptions = useMemo(() => {
-  if (!Array.isArray(chartData)) return [];
-  return chartData.map(item => item.month);
-}, [chartData]);
+  const monthOptions = useMemo(() => {
+    if (!Array.isArray(chartData)) return [];
+    return chartData.map(item => item.month);
+  }, [chartData]);
 
-console.log(monthOptions,"monthOptions");
+  console.log(monthOptions, "monthOptions");
 
   /* ---------------- Reset on Props Change ---------------- */
   useEffect(() => {
@@ -171,7 +173,7 @@ console.log(monthOptions,"monthOptions");
       formatter() {
         return `
           <b>${this.x}</b><br/>
-          Turnover: <b>${formatINR(this.y)}</b>
+          Amount: <b>${formatINR(this.y)}</b>
         `;
       },
     },
@@ -305,6 +307,8 @@ console.log(monthOptions,"monthOptions");
       {showTable && tableParams && (
         <MonthWiseTable
           year={tableParams.year}
+          onYearChange={setSelectedChildYear}
+
           month={tableParams.month}
           company={tableParams.company}
           monthOptions={monthOptions}

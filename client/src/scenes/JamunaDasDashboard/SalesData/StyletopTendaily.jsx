@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenItemDailyQuery } from
   "../../../redux/service/jamunasDashboardService.js";
+import TopTenItemTodayTable from "./TableData/TopTenItemTodayTable.jsx";
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
@@ -13,6 +14,8 @@ const COLORS = [
 
 const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
   const theme = useTheme();
+  const [showTable, setShowTable] = useState(false);
+  const [tableParams, setTableParams] = useState(null);
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -41,7 +44,10 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
         salesYear: item.salesYear,
       }));
   }, [response?.data]);
-
+  const itemOptions = useMemo(() => {
+    if (!Array.isArray(chartData)) return [];
+    return [...new Set(chartData.map(item => item.itemName))];
+  }, [chartData]);
   /* ---------- Chart Options ---------- */
   const options = {
     chart: {
@@ -65,7 +71,18 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
-        size: "85%",            // 🎯 full round pie
+        size: "85%",
+        point: {
+          events: {
+            click() {
+              setTableParams({
+                itemName: this.itemName,
+                company: this.company,
+              });
+              setShowTable(true);
+            },
+          },
+        },
         dataLabels: {
           enabled: true,
           formatter() {
@@ -105,6 +122,18 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
           options={options}
         />
       </CardContent>
+      {showTable && tableParams && (
+        <TopTenItemTodayTable
+          itemName={tableParams.itemName}
+          company={tableParams.company}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
+          itemOptions={itemOptions}
+        />
+      )}
+
     </Card>
   );
 };

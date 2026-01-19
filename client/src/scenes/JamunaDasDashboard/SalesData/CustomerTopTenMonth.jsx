@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent, useTheme, Box } from "@mui/material";
 import { useGetTopTenCustomerMonthQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import FinYear from "../../../components/FinYear.js";
-
+import TopTenCustomerMonthWiseTable from './TableData/TopTenCustomerMonthTable.jsx'
 Highcharts3D(Highcharts);
 
 const COLORS = [
@@ -15,9 +15,12 @@ const COLORS = [
   "#00CED1", "#DC143C",
 ];
 
-const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
+
+const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
+  const [tableParams, setTableParams] = useState(null);
+  const [showTable, setShowTable] = useState(false);
   console.log(selectMonths, "selectMonths");
 
   const formatINR = (value) =>
@@ -41,9 +44,16 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
       y: Number(item.totalSales),
       customer: item.customer,
       month: item.salesYear,
+      year: item.fiYear,
+      company: item.company,
+
       color: COLORS[index % COLORS.length],
     }));
   }, [response?.data]);
+  const customerOptions = useMemo(() => {
+    return [...new Set(chartData.map(i => i.customer))];
+
+  }, [chartData]);
 
   /* ---------------- Chart Options ---------------- */
   const options = {
@@ -89,6 +99,20 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
             fontWeight: "600",
           },
         },
+        point: {
+          events: {
+            click() {
+              setTableParams({
+                year: this.options.year,
+                month: this.options.month,
+                customer: this.options.customer,
+                company: this.options.company,
+              });
+              setShowTable(true);
+            },
+          },
+
+        },
       },
     },
 
@@ -120,6 +144,7 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
               selectedYear={selectedYear}
               selectmonths={selectMonths}
               setSelectmonths={setSelectMonths}
+              autoBorder={true}
             />
           </Box>
         }
@@ -142,6 +167,20 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany }) => {
           immutable
         />
       </CardContent>
+      {showTable && tableParams && (
+        <TopTenCustomerMonthWiseTable
+          year={tableParams.year}
+          month={tableParams.month}
+          customer={tableParams.customer}
+          company={tableParams.company}
+          customerOptions={customerOptions}
+          finYrData={finYrData}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
+        />
+      )}
     </Card>
   );
 

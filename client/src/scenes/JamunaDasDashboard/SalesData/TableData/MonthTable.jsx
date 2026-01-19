@@ -15,9 +15,8 @@ import { useGetMonthlySalesTableQuery } from
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
-import FinYear from "../../../../components/FinYear";
 const MonthWiseTable = ({
-    year, month, company, closeTable, finYrData, monthOptions
+    year, month, company, closeTable, finYrData, monthOptions, onYearChange
 }) => {
 
     console.log(year, month, company, closeTable, finYrData, "receivedparams")
@@ -53,6 +52,11 @@ const MonthWiseTable = ({
 
     console.log(rawData, "rawData");
 
+    useEffect(() => {
+        // when year OR monthOptions change → reset month
+        setSelectedMonth("ALL");
+        setCurrentPage(1);
+    }, [year, monthOptions]);
 
 
     // ✅ FILTERING
@@ -108,11 +112,12 @@ const MonthWiseTable = ({
     }, [company]);
 
 
+
     // ✅ TOTAL
     const totalTurnOver = useMemo(
         () =>
             filteredData.reduce(
-                (sum, r) => sum + Number(r.value || 0),
+                (sum, r) => sum + Number(r.amount || 0),
                 0
             ),
         [filteredData]
@@ -274,6 +279,8 @@ const MonthWiseTable = ({
                                     value={localYear || ""}
                                     onChange={(e) => {
                                         setLocalYear(e.target.value);
+                                        onYearChange(e.target.value); // 🔥 THIS updates monthOptions
+
                                         setCurrentPage(1);
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
@@ -419,11 +426,12 @@ const MonthWiseTable = ({
                                     <th className="border p-1 text-center w-4">S.No</th>
                                     <th className="border p-1 text-center w-16">Month</th>
                                     <th className="border p-1 text-center w-20">Doc No</th>
-                                    <th className="border p-1 text-center w-[40px]">Doc Date</th>
+                                    <th className="border p-1 text-center w-[45px]">Doc Date</th>
                                     <th className="border p-1 text-center w-12">Sales Type</th>
                                     <th className="border p-1 text-center w-32">Customer</th>
                                     <th className="border p-1 text-center w-32">Item Name</th>
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
+                                    <th className="border p-1 text-center w-8">UOM</th>
                                     <th className="border p-1 text-center w-8">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
@@ -432,7 +440,7 @@ const MonthWiseTable = ({
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={8} className="h-[300px] text-center">
+                                        <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
                                                 <SpinLoader />
                                             </div>
@@ -463,6 +471,7 @@ const MonthWiseTable = ({
                                                 <td className="border p-1 pr-2 capitalize text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pl-2 text-left">{row.uom}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.rate}</td>
 
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">

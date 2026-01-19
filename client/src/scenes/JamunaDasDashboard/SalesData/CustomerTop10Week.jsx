@@ -5,7 +5,8 @@ import HighchartsMore from "highcharts/highcharts-more";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenCustomerWeekQuery } from
   "../../../redux/service/jamunasDashboardService.js";
-
+import { useState } from "react";
+import TopTenCustomerWeekWiseTable from './TableData/TopTenCustomerWeekTable.jsx'
 HighchartsMore(Highcharts);
 
 /* 🎨 Color palette */
@@ -37,6 +38,8 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
+  const [showTable, setShowTable] = useState(false);
+  const [tableParams, setTableParams] = useState(null);
 
   /* ---------------- Normalize & Sort ---------------- */
   const chartData = useMemo(() => {
@@ -50,7 +53,9 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
       .sort((a, b) => b.y - a.y)
       .slice(0, 10);
   }, [response?.data]);
-
+  const customerOptions = useMemo(() => {
+    return [...new Set(chartData.map(i => i.customer))];
+  }, [chartData]);
   /* ---------------- Top 3 ---------------- */
   const top3Customers = useMemo(() => chartData.slice(0, 3), [chartData]);
 
@@ -60,6 +65,7 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     low: 0,
     high: item.y,
     customer: item.customer,
+    company: item.company,
     color: COLORS[index % COLORS.length], // 🎨 stick color
   }));
 
@@ -67,6 +73,8 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     x: index,
     y: item.y,
     customer: item.customer,
+    company: item.company,
+
     color: COLORS[index % COLORS.length], // 🎨 dot color (same)
   }));
 
@@ -140,6 +148,17 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
         borderWidth: 0,
         enableMouseTracking: true,
         states: { inactive: { opacity: 1 } },
+        point: {
+          events: {
+            click() {
+              setTableParams({
+                customer: this.customer,
+                company: this.company,
+              });
+              setShowTable(true);
+            },
+          },
+        },
       },
 
       /* 🍭 DOT */
@@ -165,6 +184,17 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
           },
         },
         states: { inactive: { opacity: 1 } },
+        point: {
+          events: {
+            click() {
+              setTableParams({
+                customer: this.customer,
+                company: this.company,
+              });
+              setShowTable(true);
+            },
+          },
+        },
       },
     ],
   };
@@ -216,6 +246,18 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
 
         <HighchartsReact highcharts={Highcharts} options={options} />
       </CardContent>
+      {showTable && tableParams && (
+        <TopTenCustomerWeekWiseTable
+          customer={tableParams.customer}
+          company={tableParams.company}
+          customerOptions={customerOptions}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
+        />
+      )}
+
     </Card>
   );
 };

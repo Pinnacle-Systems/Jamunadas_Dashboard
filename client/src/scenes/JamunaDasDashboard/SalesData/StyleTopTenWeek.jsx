@@ -1,18 +1,20 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenItemWeekQuery } from
   "../../../redux/service/jamunasDashboardService.js";
+import TopTenItemWeekTable from './TableData/TopTenItemWeekTable.jsx'
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
   "#B435E3", "#E35B5B", "#FFA500", "#800080",
   "#00CED1", "#DC143C",
 ];
-
 const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
   const theme = useTheme();
+  const [showTable, setShowTable] = useState(false);
+  const [tableParams, setTableParams] = useState(null);
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -41,7 +43,10 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
         salesYear: item.salesYear,
       }));
   }, [response?.data]);
-
+  const itemOptions = useMemo(() => {
+    if (!Array.isArray(chartData)) return [];
+    return [...new Set(chartData.map(item => item.itemName))];
+  }, [chartData]);
   /* ---------- Top 3 Items ---------- */
   const top3Items = useMemo(() => {
     return chartData
@@ -133,6 +138,17 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
           lineWidth: 2,
           lineColor: "#fff",
         },
+        point: {
+          events: {
+            click() {
+              setTableParams({
+                itemName: this.itemName,
+                company: this.company,
+              });
+              setShowTable(true);
+            },
+          },
+        },
       },
     ],
   };
@@ -185,6 +201,18 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
         {/* 📈 Chart */}
         <HighchartsReact highcharts={Highcharts} options={options} />
       </CardContent>
+      {showTable && tableParams && (
+        <TopTenItemWeekTable
+          itemName={tableParams.itemName}
+          company={tableParams.company}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
+          itemOptions={itemOptions}
+        />
+      )}
+
     </Card>
   );
 };

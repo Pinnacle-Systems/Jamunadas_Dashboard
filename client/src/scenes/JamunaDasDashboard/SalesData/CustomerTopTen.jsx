@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
+import { Card, CardHeader, CardContent, Box, useTheme } from "@mui/material";
+
 import { useGetTopTenCustomerQuery } from
   "../../../redux/service/jamunasDashboardService.js";
-import { useDispatch } from "react-redux";
-// import CustomerWiseTable from "./CustomerWiseTable";
+
+import TopTenCustomerYearWiseTable from
+  "../SalesData/TableData/TopTenCustomerYearTable.jsx";
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
@@ -13,13 +15,14 @@ const COLORS = [
   "#00CED1", "#DC143C",
 ];
 
-const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
+const CustomerTopTen = ({ selectedYear, selectedCompany, finYrData }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
 
-  const [showTable, setShowTable] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [tableParams, setTableParams] = useState(null);
+  const [showTable, setShowTable] = useState(false);
 
+  /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -33,28 +36,34 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
   );
 
   /* ---------------- Normalize API Data ---------------- */
-  const filteredData = Array.isArray(customer?.data) ? customer.data : [];
+  const chartData = useMemo(() => {
+    if (!Array.isArray(customer?.data)) return [];
 
-  const chartData = filteredData
-    .filter(item => Number(item.totalSales) > 0)
-    .map((item, index) => ({
-      y: Number(item.totalSales),
-      color: COLORS[index % COLORS.length],
-      customer: item.customer,
-    }));
+    return customer.data
+      .filter(item => Number(item.totalSales) > 0)
+      .map((item, index) => ({
+        y: Number(item.totalSales),
+        customer: item.customer,
+        finYear: item.finyr,
+        company: item.company,
+        color: COLORS[index % COLORS.length],
+      }));
+  }, [customer?.data]);
 
-  const categories = chartData.map(item => item.customer);
+  /* ---------------- Customer Dropdown Options ---------------- */
+  const customerOptions = useMemo(() => {
+    return [...new Set(chartData.map(i => i.customer))];
+  }, [chartData]);
 
-  /* ---------------- Click Handler ---------------- */
-  const handlePointClick = (point) => {
-    setSelectedCustomer({
-      customerName: point.options.customer,
-    });
-    setShowTable(true);
-  };
+  /* ---------------- Reset on Year / Company Change ---------------- */
+  useEffect(() => {
+    setSelectedCustomer(null);
+    setShowTable(false);
+    setTableParams(null);
+  }, [selectedYear, selectedCompany]);
 
   /* ---------------- Chart Options ---------------- */
-  const options = {
+  const options = useMemo(() => ({
     chart: {
       type: "column",
       height: 440,
@@ -63,29 +72,18 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
     title: { text: "" },
 
     xAxis: {
-      categories,
+      categories: chartData.map(i => i.customer),
       labels: {
         rotation: -45,
         style: { fontSize: "11px" },
       },
-      title: {
-        text: "Customer",
-      },
+      title: { text: "Customer" },
     },
 
     yAxis: {
       type: "logarithmic",
       min: 1,
-      title: {
-        text: "Sales",
-        style: { fontSize: "13px" },
-      },
-    //   labels: {
-    //     style: { fontSize: "11px", fontWeight: "500" },
-    //     formatter() {
-    //       return formatINR(this.value);
-    //     },
-    //   },
+      title: { text: "Sales" },
     },
 
     tooltip: {
@@ -100,25 +98,31 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
     plotOptions: {
       column: {
         cursor: "pointer",
-        pointWidth: 25,
+        pointWidth: 28,
         dataLabels: {
           enabled: true,
           rotation: -90,
           inside: true,
+          formatter() {
+            return formatINR(this.y);
+          },
           style: {
             fontSize: "11px",
             fontWeight: "bold",
             color: "#fff",
             textOutline: "1px contrast",
           },
-          formatter() {
-            return formatINR(this.y);
-          },
         },
         point: {
           events: {
             click() {
-              handlePointClick(this);
+              setSelectedCustomer(this.options.customer);
+              setTableParams({
+                customer: this.options.customer,
+                year: selectedYear,
+                company: this.options.company,
+              });
+              setShowTable(true);
             },
           },
         },
@@ -134,18 +138,21 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
 
     legend: { enabled: false },
     credits: { enabled: false },
-  };
+  }), [chartData]);
 
   /* ---------------- Render ---------------- */
   return (
     <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
       <CardHeader
-        title={` Top   10   Customer   in  year  ${selectedYear}   Sales`}
+        title={`Top 10 Customer - ${selectedYear}`}
         titleTypographyProps={{ sx: { fontSize: ".9rem", fontWeight: 600 } }}
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
       <CardContent>
+        {/* Customer Dropdown */}
+    
+
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
@@ -153,12 +160,20 @@ const CustomerTopTen = ({ selectedYear, selectedCompany }) => {
         />
       </CardContent>
 
-      {/* {showTable && selectedCustomer && (
-        <CustomerWiseTable
-          customerName={selectedCustomer.customerName}
-          closeTable={() => setShowTable(false)}
+      {/* Table */}
+      {showTable && tableParams && (
+        <TopTenCustomerYearWiseTable
+          customer={tableParams.customer}
+          year={tableParams.year}
+          company={tableParams.company}
+          customerOptions={customerOptions}
+          finYrData={finYrData}
+          closeTable={() => {
+            setShowTable(false);
+            setTableParams(null);
+          }}
         />
-      )} */}
+      )}
     </Card>
   );
 };
