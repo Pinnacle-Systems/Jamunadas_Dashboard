@@ -23,7 +23,7 @@ const jdasDbConfig = {
   host: "203.95.216.155",
   database: "pssjdas",
   port: 3555,
-  connectionLimit: 10,
+  connectionLimit: 1000,
 };
 
 let jdasConnectionPool;

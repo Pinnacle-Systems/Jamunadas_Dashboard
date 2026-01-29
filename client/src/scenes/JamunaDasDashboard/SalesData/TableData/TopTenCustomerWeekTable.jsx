@@ -20,7 +20,7 @@ const TopTenCustomerWeekWiseTable = ({
     year, customer, company, closeTable, finYrData, customerOptions
 }) => {
 
-    console.log(year, customer, company, closeTable, finYrData, "receivedparams")
+    console.log(customer, finYrData, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
@@ -41,7 +41,7 @@ const TopTenCustomerWeekWiseTable = ({
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: localYear,
-                    customer: selectedCustomer
+                    customer: customer
                 },
             },
             { skip: !localYear }

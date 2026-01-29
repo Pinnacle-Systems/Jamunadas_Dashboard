@@ -108,11 +108,11 @@ const QuarterWiseTable = ({
     }, [company]);
 
 
-    // ✅ TOTAL
+    console.log(filteredData, "filteredData");
     const totalTurnOver = useMemo(
         () =>
             filteredData.reduce(
-                (sum, r) => sum + Number(r.value || 0),
+                (sum, r) => sum + Number(r.amount || 0),
                 0
             ),
         [filteredData]

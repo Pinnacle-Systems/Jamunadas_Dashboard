@@ -24,6 +24,7 @@ export async function getMonthlySalesTable(req, res) {
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?
         AND d.finyr = ? AND e.payperiod  = ?
+        
      
 
       `,
