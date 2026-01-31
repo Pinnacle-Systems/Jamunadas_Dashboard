@@ -11,26 +11,63 @@ export async function getMonthlySalesTable(req, res) {
 
         console.log(companyName, "req.query for getMonthlySalesTable")
 
+        //     const result = await pool.query(
+        //         `
+
+        //   select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom    from gtsalesinv a
+        //   JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+        //   JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+        //   JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+        //   JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
+        //   join gtitemmast g on g.gtitemmastid = b.itemname 
+        //   join gtcolormast h on h.gtcolormastid  = b.color 
+        //   join sizemast i on i.sizemastid = b.sizes 
+        //   where c.compcode = ?
+        //     AND d.finyr = ? AND e.payperiod  = ?
+
+
+
+        //   `,
+        //         [companyName, finYear, month]       
+
+        //     );
+
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom    from gtsalesinv a
-      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
-      JOIN gtcompmast c ON c.gtcompmastid = a.compcode
-      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
-      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
-      join gtitemmast g on g.gtitemmastid = b.itemname 
-      join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
-      where c.compcode = ?
-        AND d.finyr = ? AND e.payperiod  = ?
+select
+	month_frq.payperiod,
+	comp_master.compcode,
+	sales_inv.docid,
+	sales_inv.docdate,
+	sales_inv.salestype,
+	sales_inv.customer,
+	item_master.itemname,
+	color_master.color,
+	size_master.sizename,
+	sales_inv_det.invqty,
+	round(sales_inv_det.amount/sales_inv_det.invqty,2) rate,
+	sales_inv_det.amount,
+	item_master.uom    
+from gtsalesinv sales_inv 
+	join gtsalesinvdet sales_inv_det on sales_inv.gtsalesinvid = sales_inv_det.gtsalesinvid
+	join gtcompmast comp_master on comp_master.gtcompmastid = sales_inv.compcode
+	join gtitemmast item_master on sales_inv_det.itemname = item_master.gtitemmastid
+	join gtcolormast color_master on sales_inv_det.color = color_master.gtcolormastid
+	join sizemast size_master on sales_inv_det.sizes = size_master.sizemastid 
+	join hrmfrq month_frq on sales_inv.docdate between month_frq.mstdt and month_frq.mendt  
+where
+	comp_master.compcode = ?
+	and month_frq.payperiod = ?
+
         
      
 
       `,
-            [companyName, finYear, month]   // ✅ positional params
+            [companyName, month]
 
         );
+
 
         const resp = result.map((sale) => ({
             month: sale.payperiod,

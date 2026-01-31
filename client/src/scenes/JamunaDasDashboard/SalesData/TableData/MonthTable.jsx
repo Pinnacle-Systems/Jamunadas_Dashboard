@@ -12,6 +12,7 @@ import { saveAs } from "file-saver";
 
 import { useGetMonthlySalesTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
+import moment from "moment";
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
@@ -259,7 +260,12 @@ const MonthWiseTable = ({
         );
     };
 
+    const formateDate = (date) => {
+        if (!date) return
 
+        return moment(date).format("YYYY-MM-DD")
+
+    }
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
             <div className="bg-white w-[1350px] h-[630px] p-4 rounded-xl relative">
@@ -466,7 +472,7 @@ const MonthWiseTable = ({
                                                 <td className="border p-1 pl-2 text-left">{row.month}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.docId}</td>
 
-                                                <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
+                                                <td className="border p-1 pl-2 text-left ">{formateDate(row.docDate)}</td>
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
                                                 <td className="border p-1 pr-2 capitalize text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
