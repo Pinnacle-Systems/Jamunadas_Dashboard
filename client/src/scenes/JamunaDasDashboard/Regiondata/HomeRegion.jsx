@@ -1,4 +1,3 @@
-import { params } from "node-oracledb/src/execObj.lib";
 import { useGetRegioncountQuery } from "../../../redux/service/misDashboardService";
 import { Card, CardHeader, IconButton } from "@mui/material";
 import Highcharts from "highcharts";

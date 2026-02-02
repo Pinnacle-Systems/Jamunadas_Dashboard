@@ -14,7 +14,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "6": "^0.0.1",
     "@prisma/client": "^4.16.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
@@ -38,7 +37,6 @@
     "multer": "^1.4.5-lts.2",
     "next": "^14.0.4",
     "node-cron": "^4.1.1",
-    "node-oracledb": "^1.0.2",
     "nodemailer": "^6.10.1",
     "nodemon": "^3.1.9",
     "oracledb": "^6.10.0",

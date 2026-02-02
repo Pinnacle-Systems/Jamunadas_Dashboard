@@ -8,7 +8,6 @@ import {
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useGetMisDashboardEsiDetQuery, useGetMisDashboardSalaryDetQuery } from '../../../redux/service/misDashboardService'
-import { params } from 'node-oracledb/src/execObj.lib'
 
 const Companywisessalary = ({ companyName }) => {
   const [totalStats, setTotalStats] = useState({ totalMale: 0, totalFemale: 0, total: 0 })
