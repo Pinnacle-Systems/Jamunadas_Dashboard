@@ -18,10 +18,10 @@ import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
 const TopTenCustomerYearWiseTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions
+    year, customer, company, closeTable, finYrData, customerOptions ,setSelectedYear ,selectedYear
 }) => {
 
-    console.log(year, customer, company, closeTable, finYrData, "receivedparams")
+    console.log(year, customer, selectedYear,  finYrData, "selectedYear")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
@@ -29,23 +29,23 @@ const TopTenCustomerYearWiseTable = ({
     });
     const [selectedCustomer, setSelectedCustomer] = useState(customer || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(year);
+    // const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading , isFetching} =
         useGetTopTenCustomerYearTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
-                    finYear: localYear,
+                    finYear: selectedYear,
                     customer: selectedCustomer
                 },
             },
-            { skip: !localYear }
+            { skip: !selectedYear }
         );
 
     const rawData = useMemo(() => {
@@ -169,7 +169,7 @@ const TopTenCustomerYearWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            selectedYear: selectedYear,
             localCompany,
             dynamicField: "Customer",
 
@@ -296,9 +296,12 @@ const TopTenCustomerYearWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                    value={localYear || ""}
+                                    value={selectedYear}
                                     onChange={(e) => {
-                                        setLocalYear(e.target.value);
+                                        setSelectedYear(e.target.value);
+                                        if(selectedCustomer){
+                                            setSelectedCustomer("")
+                                        }
                                         setCurrentPage(1);
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
@@ -312,7 +315,8 @@ const TopTenCustomerYearWiseTable = ({
                                             {y.finYear}
                                         </option>
                                     ))}
-                                </select></div>
+                                </select>
+                                </div>
 
                             <div className="w-24">
                                 <select
@@ -331,7 +335,7 @@ const TopTenCustomerYearWiseTable = ({
 
                             <div className="w-72">
                                 <select
-                                    value={selectedCustomer || "ALL"}
+                                    value={selectedCustomer || ""}
                                     onChange={(e) => {
                                         setSelectedCustomer(e.target.value);
                                         setCurrentPage(1);
@@ -339,7 +343,7 @@ const TopTenCustomerYearWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option value="ALL"></option>
 
                                     {customerOptions?.map((m) => (
                                         <option key={m} value={m}>
@@ -458,7 +462,7 @@ const TopTenCustomerYearWiseTable = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
