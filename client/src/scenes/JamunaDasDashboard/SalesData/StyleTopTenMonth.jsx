@@ -201,7 +201,7 @@
 // };
 
 // export default StyleTopTenMonth;
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme, Box } from "@mui/material";
@@ -209,11 +209,19 @@ import { useGetTopTenItemMonthQuery } from "../../../redux/service/jamunasDashbo
 import FinYear from "../../../components/FinYear.js";
 import TopTenItemMonthWiseTable from "./TableData/TopTenItemrMonthTable.jsx";
 
-const StyleTopTenMonth = ({ selectedYear, setSelectedYear, selectedCompany, finYrData }) => {
+const StyleTopTenMonth = ({ yearFilter, setYearFilter, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+
+
+
+  useEffect(() => {
+    setSelectedYear(yearFilter)
+  }, [yearFilter])
+
 
 
   console.log({ selectedYear, selectedCompany, selectMonths }, "StyleTopTenMonth");
@@ -412,6 +420,7 @@ const StyleTopTenMonth = ({ selectedYear, setSelectedYear, selectedCompany, finY
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedYear(yearFilter)
           }}
           selectMonths={selectMonths}
           setSelectMonths={setSelectMonths}

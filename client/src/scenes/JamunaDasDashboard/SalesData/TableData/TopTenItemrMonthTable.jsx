@@ -32,14 +32,14 @@ const TopTenItemMonthWiseTable = ({
     // const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
     // const [localYear, setLocalYear] = useState(selectedYear);
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [itemName, setItemName] = useState(item || "ALL")
+    const [itemName, setItemName] = useState(item || "")
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading , isFetching  } =
+    const { data: response, isLoading, isFetching } =
         useGetTopTenItemMonthTableQuery(
             {
                 params: {
@@ -314,9 +314,12 @@ const TopTenItemMonthWiseTable = ({
                                         // setLocalYear(e.target.value);
                                         setSelectedYear(e.target.value)
                                         setCurrentPage(1);
-                                        if (selectMonths) {
+                                        if (itemName) {
+                                            setItemName("")
+                                        } if (selectMonths) {
                                             setSelectMonths("")
                                         }
+
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >

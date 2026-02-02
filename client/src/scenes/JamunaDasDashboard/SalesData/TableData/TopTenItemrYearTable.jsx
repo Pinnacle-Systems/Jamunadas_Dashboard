@@ -17,11 +17,11 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
-const TopTenItemYearWiseTable = ({
-    year, itemName, company, closeTable, finYrData, itemOptions
+const TopTenItemYearWiseTable = ({ 
+    year, itemName, company, closeTable, finYrData, itemOptions ,setSelectedYear ,selectedYear
 }) => {
 
-    console.log(year, itemName, company, closeTable, finYrData, "receivedparams")
+    console.log(year, itemName, company, selectedYear, finYrData, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
@@ -29,23 +29,23 @@ const TopTenItemYearWiseTable = ({
     });
     const [selectedItem, setSelectedItem] = useState(itemName || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(year);
+    // const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading ,isFetching } =
         useGetTopTenItemYearTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
-                    finYear: localYear,
+                    finYear: selectedYear,
                     item: selectedItem
                 },
             },
-            { skip: !localYear }
+            { skip: !selectedYear }
         );
 
     const rawData = useMemo(() => {
@@ -171,7 +171,7 @@ const TopTenItemYearWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            selectedYear: setSelectedYear,
             localCompany,
             dynamicField: "Item",
 
@@ -299,10 +299,13 @@ const TopTenItemYearWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                    value={localYear || ""}
+                                    value={selectedYear || ""}
                                     onChange={(e) => {
-                                        setLocalYear(e.target.value);
-                                        setCurrentPage(1);
+                                        setSelectedYear(e.target.value);
+                                        setCurrentPage(1);  
+                                        if(selectedItem){
+                                            setSelectedItem("")
+                                        }
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >
@@ -342,7 +345,7 @@ const TopTenItemYearWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option value="">Select Item</option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>
@@ -462,7 +465,7 @@ const TopTenItemYearWiseTable = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className="h-[300px] text-center">
                                             <div className="flex justify-center items-center pointer-events-none">

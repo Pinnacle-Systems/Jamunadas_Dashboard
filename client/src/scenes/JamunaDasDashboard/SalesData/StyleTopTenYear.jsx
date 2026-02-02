@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
@@ -11,10 +11,19 @@ const COLORS = [
     "#00CED1", "#DC143C",
 ];
 
-const StyleTopTenYear = ({ selectedYear, selectedCompany, finYrData }) => {
+const StyleTopTenYear = ({ yearFilter, setYearFilter , selectedCompany, finYrData ,  }) => {
     const theme = useTheme();
     const [showTable, setShowTable] = useState(false);
     const [tableParams, setTableParams] = useState(null);
+    const [selectedYear, setSelectedYear]  =  useState(yearFilter || "")
+
+
+    console.log(yearFilter,"yearFilter",selectedYear);
+
+    useEffect(() => {
+        setSelectedYear(yearFilter)
+    },[yearFilter])
+    
 
 
     /* ---------- INR Formatter ---------- */
@@ -173,7 +182,10 @@ const StyleTopTenYear = ({ selectedYear, selectedCompany, finYrData }) => {
                     closeTable={() => {
                         setShowTable(false);
                         setTableParams(null);
+                        setSelectedYear(yearFilter)
                     }}
+                    selectedYear={selectedYear}
+                    setSelectedYear={setSelectedYear}
                 />
             )}
         </Card>
