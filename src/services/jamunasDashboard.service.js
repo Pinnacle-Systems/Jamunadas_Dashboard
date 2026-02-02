@@ -110,17 +110,17 @@ export async function getQuarterSales(req, res) {
 
         const result = await pool.query(
             `
-      select d.finyr,c.compcode,e.perioddesc,e.quarter as salesquarter,e.pstartdate,e.penddate,coalesce(sum(b.delqty * a.netamt), 0) as totalsales
-from gtfinancialyeardtl e
-join gtfinancialyear d on d.gtfinancialyearid = e.gtfinancialyearid
-join gtcompmast c on c.compcode = ?
-left join gtsalesinv a on a.finyear = d.gtfinancialyearid and a.compcode = c.gtcompmastid and a.docdate between e.pstartdate and e.penddate
-left join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
-where d.finyr = ?
+select d.finyr,c.compcode,e.perioddesc,e.quarter as salesquarter,e.pstartdate,e.penddate,(sum(a.netamt)) as totalsales,
+DATE_FORMAT(e.pstartdate, '%M %Y') mon
+from gtsalesinv a 
+join gtfinancialyear d on a.finyear = d.gtfinancialyearid
+join gtfinancialyeardtl e on d.gtfinancialyearid = e.gtfinancialyearid and a.docdate between e.pstartdate and e.penddate
+join gtcompmast c on a.compcode = c.gtcompmastid 
+where c.compcode = ? and   d.finyr = ? 
 group by d.finyr,c.compcode,e.perioddesc,e.quarter,e.pstartdate,e.penddate
 order by e.pstartdate
       `,
-            [selectedCompany, selectedYear]   // ✅ positional params
+            [selectedCompany, selectedYear]   
 
         );
 
@@ -153,14 +153,17 @@ export async function getYearlySales(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,sum(a.netamt) as totalsales
+select d.finyr,ee.compcode,sum(a.netamt) as totalsales
 from gtsalesinv a
-join gtcompmast e on e.gtcompmastid = a.compcode
+join gtcompmast ee on ee.gtcompmastid = a.compcode
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
- WHERE e.compcode = ? AND d.finyr = ?
-group by d.finyr,e.compcode
+JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
+ WHERE ee.compcode = ? AND d.finyr = ?
+group by d.finyr,ee.compcode
 order by totalsales desc 
 limit 10 
+
+
       `,
             [selectedCompany, year]
 
@@ -422,7 +425,6 @@ select a.* from
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
-join gtcompmast ee on ee.compname=a.customer 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
 join dtitemmast g on g.dtitemmastid = b.itemname

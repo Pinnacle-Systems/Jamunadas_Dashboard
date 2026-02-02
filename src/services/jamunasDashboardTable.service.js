@@ -76,9 +76,10 @@ export async function getQuarterSalesTable(req, res) {
             `
  
       SELECT
-    c.compcode,    d.finyr,    e.quarter AS salesquarter,    a.docid,    a.docdate,    a.salestype,    a.customer,    g.itemname,    h.color,    i.sizename,    
+    c.compcode,    d.finyr,    e.quarter AS salesquarter,    a.docid,    a.docdate,    a.salestype,    a.customer,    g.itemname,    h.color,    i.sizename,g2.unitname uom,    
     b.invqty,   round(b.amount/b.invqty,2) rate ,
-    round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom 
+    round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,
+    DATE_FORMAT(e.pstartdate, '%M %Y') mon
 FROM gtsalesinv a
 JOIN gtsalesinvdet b     ON b.gtsalesinvid = a.gtsalesinvid
 JOIN gtcompmast c     ON c.gtcompmastid = a.compcode
@@ -87,7 +88,8 @@ JOIN gtfinancialyeardtl e     ON e.gtfinancialyearid = d.gtfinancialyearid    AN
 JOIN dtitemmast g     ON g.dtitemmastid = b.itemname 
 JOIN gtcolormast h     ON h.gtcolormastid = b.color 
 JOIN sizemast i     ON i.sizemastid = b.sizes
-WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
+join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ? 
 
       `,
             [companyName, finYear, quarter]   // ✅ positional params
@@ -136,7 +138,7 @@ export async function getYearlySalesTable(req, res) {
  
     select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,
 h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom      from gtsalesinv a
+ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount ,g.uom      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear

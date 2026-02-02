@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import Highcharts3D from "highcharts/highcharts-3d";
@@ -22,6 +22,9 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   console.log(selectMonths, "selectMonths");
+
+
+
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
