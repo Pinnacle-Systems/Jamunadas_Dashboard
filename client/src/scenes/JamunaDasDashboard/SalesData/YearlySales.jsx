@@ -49,7 +49,7 @@ const YearlySales = ({ selectedCompany, year, finYrData }) => {
         tooltip: {
             headerFormat: '<b>{point.key}</b><br/>',
             pointFormatter() {
-                return `Turnover: <b>${formatINR(this.y)}</b>`;
+                return `Sales: <b>${formatINR(this.y)}</b>`;
             },
             style: { fontSize: "12px", color: "black" },
         },

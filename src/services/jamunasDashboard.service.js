@@ -68,9 +68,12 @@ export async function getMonthlySales(req, res) {
         e.payperiod,
            d.finyr,
         c.compcode,
-        SUM(a.netamt) AS totalsales
-      FROM gtsalesinv a
+    SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales      FROM gtsalesinv a
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid
      WHERE c.compcode = ?
@@ -110,9 +113,13 @@ export async function getQuarterSales(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,c.compcode,e.perioddesc,e.quarter as salesquarter,e.pstartdate,e.penddate,(sum(a.netamt)) as totalsales,
+select d.finyr,c.compcode,e.perioddesc,e.quarter as salesquarter,e.pstartdate,e.penddate, SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS  totalsales,
 DATE_FORMAT(e.pstartdate, '%M %Y') mon
 from gtsalesinv a 
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on a.finyear = d.gtfinancialyearid
 join gtfinancialyeardtl e on d.gtfinancialyearid = e.gtfinancialyearid and a.docdate between e.pstartdate and e.penddate
 join gtcompmast c on a.compcode = c.gtcompmastid 
@@ -155,9 +162,13 @@ export async function getYearlySales(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,ee.compcode,sum(a.netamt) as totalsales
+select d.finyr,ee.compcode,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales
 from gtsalesinv a
 join gtcompmast ee on ee.gtcompmastid = a.compcode
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
  WHERE ee.compcode = ? AND d.finyr = ?
@@ -202,9 +213,13 @@ export async function getTopTenCustomer(req, res) {
         const result = await pool.query(
             `
 
-  select d.finyr,e.compcode,a.customer as customer,sum(a.netamt) as totalsales
+  select d.finyr,e.compcode,a.customer as customer,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales
 from gtsalesinv a
 join gtcompmast e on e.gtcompmastid = a.compcode 
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
  WHERE e.compcode = ? AND d.finyr = ? 
 group by d.finyr,a.customer,e.compcode
@@ -243,9 +258,13 @@ export async function getTopTenCustomerMonth(req, res) {
 
         const result = await pool.query(
             `
-select f.payperiod,d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
+select f.payperiod,d.finyr,e.compcode,a.customer,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales
 from gtsalesinv a
 join gtcompmast e on e.gtcompmastid = a.compcode 
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
 where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ?
@@ -287,9 +306,13 @@ export async function getTopTenCustomerWeek(req, res) {
 
         const result = await pool.query(
             `
-    select d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
+    select d.finyr,e.compcode,a.customer,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales
 from gtsalesinv a
 join gtcompmast e on e.gtcompmastid = a.compcode
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 where e.compcode = ?
 AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
@@ -330,9 +353,13 @@ export async function getTopTenCustomerToday(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
+select d.finyr,e.compcode,a.customer,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales
 from gtsalesinv a
 join gtcompmast e on e.gtcompmastid = a.compcode
+      join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
+
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 where e.compcode = ?
 AND a.docdate between CURRENT_DATE and CURRENT_DATE

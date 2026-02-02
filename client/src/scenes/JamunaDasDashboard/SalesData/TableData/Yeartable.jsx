@@ -414,9 +414,9 @@ const YearlyTable = ({
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
                                     <th className="border p-1 text-center w-4">S.No</th>
-                                    <th className="border p-1 text-center w-16">Year</th>
-                                    <th className="border p-1 text-center w-20">Doc No</th>
-                                    <th className="border p-1 text-center w-[40px]">Doc Date</th>
+                                    <th className="border p-1 text-center w-12">Year</th>
+                                    <th className="border p-1 text-center w-24">Doc No</th>
+                                    <th className="border p-1 text-center w-[42px]">Doc Date</th>
                                     <th className="border p-1 text-center w-12">Sales Type</th>
                                     <th className="border p-1 text-center w-32">Customer</th>
                                     <th className="border p-1 text-center w-32">Item Name</th>
