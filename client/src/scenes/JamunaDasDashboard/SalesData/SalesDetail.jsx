@@ -108,7 +108,7 @@ const SalesDetail = ({ selectedYear, selectedCompany }) => {
 
       <Grid container spacing={1}>
         <Grid item xs={12} md={12}>
-          <MonthlySales finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
+          <MonthlySales finYrData={finYrData} yearFilter={yearFilter} selectedCompany={company} setYearFilter={setYearFilter}/>
         </Grid>
 
       </Grid>

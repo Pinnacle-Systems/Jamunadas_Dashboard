@@ -171,7 +171,7 @@ const TopTenItemYearWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: setSelectedYear,
+            selectedYear: selectedYear,
             localCompany,
             dynamicField: "Item",
 

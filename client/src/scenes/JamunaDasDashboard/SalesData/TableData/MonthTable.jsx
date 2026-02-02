@@ -17,7 +17,7 @@ import moment from "moment";
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 const MonthWiseTable = ({
-    year, month, company, closeTable, finYrData, monthOptions, onYearChange
+    year, month, company, closeTable, finYrData, monthOptions,setSelectedYear ,selectedYear
 }) => {
 
     console.log(year, month, company, closeTable, finYrData, "receivedparams")
@@ -28,23 +28,23 @@ const MonthWiseTable = ({
     });
     const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(year);
+    // const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading,isFetching  } =
         useGetMonthlySalesTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
-                    finYear: localYear,
+                    finYear: selectedYear,
                     month: selectedMonth
                 },
             },
-            { skip: !localYear }
+            { skip: !selectedYear }
         );
 
     const rawData = useMemo(() => {
@@ -174,7 +174,7 @@ const MonthWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            selectedYear: selectedYear,
             localCompany,
             dynamicField: "Month",
             dynamicValue: selectedMonth
@@ -299,13 +299,14 @@ const MonthWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                    value={localYear || ""}
+                                      value={selectedYear || ""}
                                     onChange={(e) => {
-                                        setLocalYear(e.target.value);
-                                        onYearChange(e.target.value); // 🔥 THIS updates monthOptions
-
-                                        setCurrentPage(1);
-                                    }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
+                                        setSelectedYear(e.target.value);
+                                        setCurrentPage(1);  
+                                        if(selectedMonth){
+                                            setSelectedMonth("")
+                                        }
+                                    }}className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >
                                     <option value="" disabled>
@@ -461,7 +462,7 @@ const MonthWiseTable = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">

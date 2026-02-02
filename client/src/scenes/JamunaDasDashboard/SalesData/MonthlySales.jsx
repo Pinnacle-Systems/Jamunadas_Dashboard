@@ -14,14 +14,19 @@ import { useGetMonthlySalesQuery } from
 
 import MonthWiseTable from "../SalesData/TableData/MonthTable.jsx";
 
-const MonthlySales = ({ selectedYear, selectedCompany, finYrData }) => {
+const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [tableParams, setTableParams] = useState(null);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const [selectedChildYear, setSelectedChildYear] = useState(null);
 
   const [showTable, setShowTable] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+
+  useEffect(() => {
+    setSelectedYear(yearFilter)
+  }, [yearFilter])
+
 
   /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
@@ -56,10 +61,10 @@ const MonthlySales = ({ selectedYear, selectedCompany, finYrData }) => {
   console.log(monthOptions, "monthOptions");
 
   /* ---------------- Reset on Props Change ---------------- */
-  useEffect(() => {
-    setSelectedMonth(null);
-    setShowTable(false);
-  }, [selectedYear, selectedCompany]);
+  // useEffect(() => {
+  //   setSelectedMonth(null);
+  //   setShowTable(false);
+  // }, [selectedYear, selectedCompany]);
 
   /* ---------------- Parent Chart Data ---------------- */
   const categories = useMemo(
@@ -307,7 +312,8 @@ const MonthlySales = ({ selectedYear, selectedCompany, finYrData }) => {
       {showTable && tableParams && (
         <MonthWiseTable
           year={tableParams.year}
-          onYearChange={setSelectedChildYear}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
 
           month={tableParams.month}
           company={tableParams.company}
@@ -316,6 +322,8 @@ const MonthlySales = ({ selectedYear, selectedCompany, finYrData }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedYear(yearFilter)
+
           }}
         />
       )}
