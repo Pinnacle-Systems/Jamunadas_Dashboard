@@ -17,7 +17,7 @@ import moment from "moment";
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 const MonthWiseTable = ({
-    year, month, company, closeTable, finYrData, monthOptions,setSelectedYear ,selectedYear
+    year, month, company, closeTable, finYrData, monthOptions, setSelectedYear, selectedYear
 }) => {
 
     console.log(year, month, company, closeTable, finYrData, "receivedparams")
@@ -35,7 +35,7 @@ const MonthWiseTable = ({
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading,isFetching  } =
+    const { data: response, isLoading, isFetching } =
         useGetMonthlySalesTableQuery(
             {
                 params: {
@@ -285,7 +285,7 @@ const MonthWiseTable = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
-            <div className="bg-white w-[1350px] h-[630px] p-4 rounded-xl relative">
+            <div className="bg-white w-[1370px] h-[630px] p-4 rounded-xl relative">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
@@ -299,14 +299,14 @@ const MonthWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                      value={selectedYear || ""}
+                                    value={selectedYear || ""}
                                     onChange={(e) => {
                                         setSelectedYear(e.target.value);
-                                        setCurrentPage(1);  
-                                        if(selectedMonth){
+                                        setCurrentPage(1);
+                                        if (selectedMonth) {
                                             setSelectedMonth("")
                                         }
-                                    }}className="w-full px-2 py-1 text-xs border-2   rounded-md 
+                                    }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >
                                     <option value="" disabled>
@@ -337,6 +337,8 @@ const MonthWiseTable = ({
 
                             <div className="w-40">
                                 <select
+                                    disabled={isFetching}
+
                                     value={selectedMonth || "ALL"}
                                     onChange={(e) => {
                                         setSelectedMonth(e.target.value);
@@ -345,13 +347,12 @@ const MonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
-
-                                    {monthOptions?.map((m) => (
-                                        <option key={m} value={m}>
-                                            {m}
-                                        </option>
-                                    ))}
+                                 
+                                            <option value="ALL">ALL</option>
+                                            {monthOptions?.map((m) => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                    
                                 </select>
                             </div>
 
@@ -456,7 +457,7 @@ const MonthWiseTable = ({
                                     <th className="border p-1 text-center w-32">Item Name</th>
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
                                     <th className="border p-1 text-center w-8">UOM</th>
-                                    <th className="border p-1 text-center w-8">Rate</th>
+                                    <th className="border p-1 text-center w-[38px]">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
                                 </tr>
@@ -496,8 +497,14 @@ const MonthWiseTable = ({
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
-                                                <td className="border p-1 pr-2 text-right">{row.rate}</td>
+                                                {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}
 
+                                                <td className="border p-1 pr-2 text-right  ">
+                                                    {new Intl.NumberFormat("en-IN", {
+                                                        style: "currency",
+                                                        currency: "INR",
+                                                    }).format(row.rate)}
+                                                </td>
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">
                                                     {new Intl.NumberFormat("en-IN", {
                                                         style: "currency",

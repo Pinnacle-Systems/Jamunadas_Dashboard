@@ -13,6 +13,8 @@ import ReactApexChart from "react-apexcharts";
 
 import { useGetTotalSalesQuery } from "../../../redux/service/jamunasDashboardService";
 import { push } from "../../../redux/features/opentabs";
+import SpinLoader from '../../../utils/spinLoader'
+
 
 // ---------- COMMON INR FORMATTER ----------
 const formatINR = (value) =>
@@ -148,13 +150,7 @@ const SalesData = () => {
   ];
 
   // ---------- LOADING ----------
-  if (isLoading) {
-    return (
-      <Card sx={{ borderRadius: 3, boxShadow: 4, textAlign: "center", ml: 1 }}>
-        <CircularProgress />
-      </Card>
-    );
-  }
+
 
   // ---------- ERROR ----------
   if (isError) {
@@ -182,6 +178,33 @@ const SalesData = () => {
             height={300}
           />
         )}
+        {/* <Box
+          sx={{
+            height: 300,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {isLoading ? (
+            <SpinLoader />
+          ) : isError ? (
+            <Typography color="error">
+              Failed to load chart
+            </Typography>
+          ) : salesData.length > 0 ? (
+            <ReactApexChart
+              options={apexOptions}
+              series={apexSeries}
+              type="bar"
+              height={300}
+            />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No data available
+            </Typography>
+          )}
+        </Box> */}
 
         <Box
           sx={{

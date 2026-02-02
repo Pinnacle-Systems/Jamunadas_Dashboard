@@ -36,7 +36,7 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
     })}`;
 
   /* ---------------- API ---------------- */
-  const { data: response, isLoading } = useGetMonthlySalesQuery({
+  const { data: response, isLoading, isFetching } = useGetMonthlySalesQuery({
     params: { selectedYear, selectedCompany },
   });
 
@@ -54,9 +54,11 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
 
   /* ---------------- Month Dropdown Options ---------------- */
   const monthOptions = useMemo(() => {
+    if (isFetching || isLoading) return [];   // 🔥 key line
+
     if (!Array.isArray(chartData)) return [];
     return chartData.map(item => item.month);
-  }, [chartData]);
+  }, [chartData,isFetching,isLoading]);
 
   console.log(monthOptions, "monthOptions");
 
