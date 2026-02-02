@@ -18,8 +18,8 @@ import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 import moment from "moment";
 const TopTenItemMonthWiseTable = ({
-    year, item, company, closeTable, finYrData, itemOptions, month , selectedYear , setSelectedYear ,
-    selectMonths , setSelectMonths
+    year, item, company, closeTable, finYrData, itemOptions, month, selectedYear, setSelectedYear,
+    selectMonths, setSelectMonths
 }) => {
 
     console.log(selectMonths, year, item, company, finYrData, "receivedparams")
@@ -28,35 +28,35 @@ const TopTenItemMonthWiseTable = ({
         min: 0,
         max: Infinity,
     });
-    const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
+    // const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
     // const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
+    // const [localYear, setLocalYear] = useState(selectedYear);
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(selectedYear);
-    const [itemName,setItemName] = useState(item || "ALL")
+    const [itemName, setItemName] = useState(item || "ALL")
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading , isFetching  } =
         useGetTopTenItemMonthTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
-                    finYear: localYear,
+                    finYear: selectedYear,
                     item: itemName,
                     month: selectMonths
                 },
             },
-            { skip: !localYear }
+            { skip: !selectedYear }
         );
 
     const rawData = useMemo(() => {
         return Array.isArray(response?.data) ? response.data : [];
     }, [response?.data]);
 
-    console.log(rawData, "rawData");
+    console.log(isLoading, "isLoading");
 
 
 
@@ -179,7 +179,7 @@ const TopTenItemMonthWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            selectedYear: selectedYear,
             localCompany,
             dynamicField: "Month",
             dynamicValue: selectMonths,
@@ -309,11 +309,14 @@ const TopTenItemMonthWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                    value={localYear || ""}
+                                    value={selectedYear || ""}
                                     onChange={(e) => {
-                                        setLocalYear(e.target.value);
+                                        // setLocalYear(e.target.value);
                                         setSelectedYear(e.target.value)
                                         setCurrentPage(1);
+                                        if (selectMonths) {
+                                            setSelectMonths("")
+                                        }
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >
@@ -329,9 +332,14 @@ const TopTenItemMonthWiseTable = ({
                                 </select></div>
                             <div className="w-44">
                                 <FinYear
-                                    selectedYear={localYear}
+                                    selectedYear={selectedYear}
                                     selectmonths={selectMonths}
-                                    setSelectmonths={setSelectMonths}
+                                    setSelectmonths={(value) => {
+                                        if (itemName) {
+                                            setItemName("")
+                                        }
+                                        setSelectMonths(value)
+                                    }}
                                     autoBorder={true}
 
                                 />
@@ -354,7 +362,7 @@ const TopTenItemMonthWiseTable = ({
 
                             <div className="w-72">
                                 <select
-                                    value={itemName }
+                                    value={itemName}
                                     onChange={(e) => {
                                         setItemName(e.target.value);
                                         setCurrentPage(1);
@@ -362,7 +370,7 @@ const TopTenItemMonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL"></option>
+                                    <option value="">Select Item </option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>
@@ -483,7 +491,7 @@ const TopTenItemMonthWiseTable = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
