@@ -15,12 +15,20 @@ const COLORS = [
   "#00CED1", "#DC143C",
 ];
 
-const CustomerTopTen = ({ selectedYear, selectedCompany, finYrData }) => {
+const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData }) => {
   const theme = useTheme();
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+  const [tempMonth, setTempMonth] = useState("")
+
+
+
+  useEffect(() => {
+    setSelectedYear(yearFilter)
+  }, [yearFilter])
 
   /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
@@ -56,11 +64,11 @@ const CustomerTopTen = ({ selectedYear, selectedCompany, finYrData }) => {
   }, [chartData]);
 
   /* ---------------- Reset on Year / Company Change ---------------- */
-  useEffect(() => {
-    setSelectedCustomer(null);
-    setShowTable(false);
-    setTableParams(null);
-  }, [selectedYear, selectedCompany]);
+  // useEffect(() => {
+  //   setSelectedCustomer(null);
+  //   setShowTable(false);
+  //   setTableParams(null);
+  // }, [selectedYear, selectedCompany]);
 
   /* ---------------- Chart Options ---------------- */
   const options = useMemo(() => ({
@@ -144,14 +152,14 @@ const CustomerTopTen = ({ selectedYear, selectedCompany, finYrData }) => {
   return (
     <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
       <CardHeader
-        title={`Top 10 Customer - ${selectedYear}`}
+        title={`Top 10 Customer On ${selectedYear} Sales`}
         titleTypographyProps={{ sx: { fontSize: ".9rem", fontWeight: 600 } }}
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
       <CardContent>
         {/* Customer Dropdown */}
-    
+
 
         <HighchartsReact
           highcharts={Highcharts}
@@ -171,7 +179,10 @@ const CustomerTopTen = ({ selectedYear, selectedCompany, finYrData }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedYear(yearFilter)
           }}
+          setSelectedYear={setSelectedYear}
+          selectedYear={selectedYear}
         />
       )}
     </Card>
