@@ -209,7 +209,7 @@ import { useGetTopTenItemMonthQuery } from "../../../redux/service/jamunasDashbo
 import FinYear from "../../../components/FinYear.js";
 import TopTenItemMonthWiseTable from "./TableData/TopTenItemrMonthTable.jsx";
 
-const StyleTopTenMonth = ({ selectedYear, setSelectedYear , selectedCompany, finYrData }) => {
+const StyleTopTenMonth = ({ selectedYear, setSelectedYear, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [showTable, setShowTable] = useState(false);
@@ -357,8 +357,8 @@ const StyleTopTenMonth = ({ selectedYear, setSelectedYear , selectedCompany, fin
         fillColor: {
           linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
           stops: [
-            [0, "rgb(226, 56, 56)"],
-            [1, "rgb(153, 91, 91)"],
+            [0, "rgba(173, 28, 240, 0.6)"], // blue (top)
+            [1, "rgba(243, 4, 4, 0.1)"], // light blue (bottom)
           ],
         },
       },
@@ -379,6 +379,8 @@ const StyleTopTenMonth = ({ selectedYear, setSelectedYear , selectedCompany, fin
               selectedYear={selectedYear}
               selectmonths={selectMonths}
               setSelectmonths={setSelectMonths}
+              autoBorder={true}
+
             />
           </Box>
         }
@@ -411,7 +413,7 @@ const StyleTopTenMonth = ({ selectedYear, setSelectedYear , selectedCompany, fin
             setShowTable(false);
             setTableParams(null);
           }}
-          selectMonths={selectMonths}          
+          selectMonths={selectMonths}
           setSelectMonths={setSelectMonths}
         />
       )}

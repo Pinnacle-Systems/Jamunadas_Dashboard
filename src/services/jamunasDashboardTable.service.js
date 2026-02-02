@@ -15,8 +15,8 @@ export async function getMonthlySalesTable(req, res) {
         const result = await pool.query(
             `
 
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,
-round(b.amount/b.invqty,2) rate  ,round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom    from gtsalesinv a
+      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,g2.unitname uom, b.invqty,
+round(b.amount/b.invqty,2) rate  ,round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount     from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -24,6 +24,8 @@ round(b.amount/b.invqty,2) rate  ,round(((a.netamt*((b.amount/a.gramt)*100))/100
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
+      join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+
       where c.compcode = ?
         AND d.finyr = ? AND e.payperiod  = ?
 
@@ -98,7 +100,7 @@ WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
 
         const resp = result.map((sale) => ({
             qaurter: sale.salesquarter,
-            month:sale.mon,
+            month: sale.mon,
             company: sale.compcode,
             finYear: sale.finyr,
             docId: sale.docid,
@@ -138,15 +140,17 @@ export async function getYearlySalesTable(req, res) {
             `
  
     select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,
-h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount ,g.uom      from gtsalesinv a
+h.color ,i.sizename ,g2.unitname uom, ,g2.unitname uom,b.invqty,round(b.amount/b.invqty,2) rate  ,
+ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount       from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+ 
       where c.compcode = ?
         AND d.finyr = ?
 
@@ -198,9 +202,9 @@ export async function getTopTenCustomerSalesYearlyTable(req, res) {
         const result = await pool.query(
             `
 
-select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,
        round(b.amount/b.invqty,2) rate  ,
-       round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
+       round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -208,6 +212,8 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+
       where c.compcode = ?
         AND d.finyr = ? AND a.customer = ?
   
@@ -255,15 +261,16 @@ export async function getTopTenCustomerSalesMonthTable(req, res) {
 
         const result = await pool.query(
             `
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-      round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
+      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+      round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND a.customer = ? AND e.payperiod  = ?
 
@@ -314,15 +321,16 @@ export async function getTopTenCustomerSalesWeekTable(req, res) {
             `
  
 
-   select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-  round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom      from gtsalesinv a
+   select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+  round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?  AND a.customer = ?
       AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
  
@@ -371,15 +379,16 @@ export async function getTopTenCustomerSalesdailyTable(req, res) {
         const result = await pool.query(
             `
  
-select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?  AND a.customer = ?
       AND a.docdate between CURRENT_DATE and CURRENT_DATE
 
@@ -434,14 +443,15 @@ export async function getTopTenItemSalesYearTable(req, res) {
  
 
       select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,     
-      h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
+      h.color ,i.sizename ,g2.unitname uom,b.invqty,round(b.amount/b.invqty,2) rate  ,(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND g.itemname = ?
 
@@ -490,15 +500,16 @@ export async function getTopTenItemSalesMonthTable(req, res) {
             `
  
 select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,
-      i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
+      i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND g.itemname = ? AND e.payperiod  = ?
 
@@ -550,15 +561,16 @@ export async function getTopTenItemSalesWeekTable(req, res) {
  
 
 select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
-      g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-      (round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
+      g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+      (round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ? AND g.itemname = ?
       AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
     
@@ -608,15 +620,16 @@ export async function getTopTenItemSalesdailyTable(req, res) {
             `
  
 select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
-      g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
-(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
+      g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ? AND g.itemname = ?
       AND a.docdate between CURRENT_DATE and CURRENT_DATE
     
