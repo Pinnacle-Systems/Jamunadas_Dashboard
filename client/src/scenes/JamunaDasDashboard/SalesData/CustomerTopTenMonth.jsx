@@ -39,7 +39,7 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
   const chartData = useMemo(() => {
     if (!Array.isArray(response?.data)) return [];
 
-    return response.data.map((item, index) => ({
+    return response?.data?.map((item, index) => ({
       name: item.customer,                // 👈 MONTH shown on slice
       y: Number(item.totalSales),
       customer: item.customer,

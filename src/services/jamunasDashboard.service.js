@@ -196,7 +196,8 @@ export async function getTopTenCustomer(req, res) {
 
         const result = await pool.query(
             `
- select d.finyr,e.compcode,a.customer as customer,sum(a.netamt) as totalsales
+
+  select d.finyr,e.compcode,a.customer as customer,sum(a.netamt) as totalsales
 from gtsalesinv a
 join gtcompmast e on e.gtcompmastid = a.compcode 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
@@ -290,6 +291,7 @@ AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
 group by  d.finyr,e.compcode,a.customer
 order by totalsales desc  
 limit 10
+
       `,
             [selectedCompany]   // ✅ positional params
 
@@ -371,14 +373,14 @@ export async function getTopTenItemYear(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,c.itemname,SUM(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) as totalsales
+select d.finyr,e.compcode,g.itemname,SUM(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join gtitemmast c on c.gtitemmastid = b.itemname
+join dtitemmast g on g.dtitemmastid = b.itemname
 where e.compcode = ? and d.finyr = ?
-group by d.finyr,c.itemname,e.compcode
+group by d.finyr,g.itemname,e.compcode
 order by totalsales desc  
 limit 10
 
@@ -416,19 +418,20 @@ export async function getTopTenItemMonth(req, res) {
         const result = await pool.query(
             `
 select a.* from 
-(select f.payperiod,d.finyr,e.compcode,c.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales
+(select f.payperiod,d.finyr,e.compcode,g.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtcompmast ee on ee.compname=a.customer 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
-join gtitemmast c on c.gtitemmastid = b.itemname
+join dtitemmast g on g.dtitemmastid = b.itemname
 where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ?
-group by f.payperiod,d.finyr,e.compcode,c.itemname
+group by f.payperiod,d.finyr,e.compcode,g.itemname
 ) a
 order by a.totalsales desc  
 limit 10
+
       `,
             [selectedCompany, selectedYear, selectMonths]   // ✅ positional params
 
