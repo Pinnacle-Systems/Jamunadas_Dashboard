@@ -98,6 +98,7 @@ WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
 
         const resp = result.map((sale) => ({
             qaurter: sale.salesquarter,
+            month:sale.mon,
             company: sale.compcode,
             finYear: sale.finyr,
             docId: sale.docid,
@@ -503,7 +504,7 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
 
 
       `,
-            [companyName, finYear, item, month]  
+            [companyName, finYear, item, month]
 
         );
 
@@ -548,12 +549,13 @@ export async function getTopTenItemSalesWeekTable(req, res) {
             `
  
 
-select c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
       g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
       (round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
       join dtitemmast g on g.dtitemmastid = b.itemname
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 

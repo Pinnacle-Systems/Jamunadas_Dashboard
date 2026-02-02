@@ -76,7 +76,7 @@ const QuarterSales = ({ selectedYear, selectedCompany, finYrData
         quarter: item.quarter,
         finYear: item.finyr,
         company: item.company,
-
+        month: item.month,
         monthName,
         color: QUARTER_COLORS[item.quarter],
       });
@@ -84,13 +84,23 @@ const QuarterSales = ({ selectedYear, selectedCompany, finYrData
 
     return { categories, quarterAxis, data };
   }, [response?.data]);
- 
-/* ---------------- Quarter Dropdown Options ---------------- */
-const quarterOptions = useMemo(() => {
-  if (!Array.isArray(chartData.data)) return [];
 
-  return [...new Set(chartData.data.map(item => item.quarter))];
-}, [chartData]);
+  /* ---------------- Quarter Dropdown Options ---------------- */
+  const quarterOptions = useMemo(() => {
+    if (!Array.isArray(chartData.data)) return [];
+
+    return [...new Set(chartData.data.map(item => item.quarter))];
+  }, [chartData]);
+
+  const monthOptions = useMemo(() => {
+    if (!tableParams?.quarter || !Array.isArray(chartData.data)) return [];
+
+    return chartData.data?.filter(item => item.quarter === tableParams.quarter)?.map(item => item.month)?.filter((v, i, arr) => arr.indexOf(v) === i); // unique
+  }, [chartData, tableParams]);
+
+
+
+
 
   /* ---------- CHART OPTIONS ---------- */
   const options = {
@@ -193,6 +203,7 @@ const quarterOptions = useMemo(() => {
                 year: selectedYear,
                 company: selectedCompany,
                 quarter: this.quarter,
+                month: this.month
               });
               setShowTable(true);
             },
@@ -251,8 +262,10 @@ const quarterOptions = useMemo(() => {
           year={tableParams.year}
           company={tableParams.company}
           quarter={tableParams.quarter}
+          month={tableParams.month}
           finYrData={finYrData}
           quarterOptions={quarterOptions}
+          monthOptions={monthOptions}
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);

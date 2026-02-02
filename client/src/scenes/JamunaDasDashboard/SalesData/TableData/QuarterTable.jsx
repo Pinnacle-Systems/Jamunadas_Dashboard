@@ -15,9 +15,9 @@ import { useGetQuarterSalesTableQuery } from
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
-import FinYear from "../../../../components/FinYear";
+// import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
-    year, quarter, company, closeTable, finYrData, quarterOptions
+    year, quarter, company, closeTable, finYrData, quarterOptions, monthOptions, month,
 }) => {
 
     console.log(year, quarter, company, closeTable, finYrData, "receivedparams")
@@ -27,6 +27,7 @@ const QuarterWiseTable = ({
         max: Infinity,
     });
     const [selectedQuarter, setSelectedQuarter] = useState(quarter || "ALL");
+    const [selectedMonth, setSelectedMonth] = useState(month || "ALL")
     const [localCompany, setLocalCompany] = useState(company || "ALL");
     const [localYear, setLocalYear] = useState(year);
 
@@ -60,6 +61,11 @@ const QuarterWiseTable = ({
         return rawData.filter((row) => {
             // 🔹 Customer dropdown filter
 
+            if (selectedMonth && selectedMonth !== "ALL") {
+                if (row.month !== selectedMonth) {
+                    return false;
+                }
+            }
 
             // 🔹 Search filter (month search)
             if (search.docId) {
@@ -96,13 +102,17 @@ const QuarterWiseTable = ({
 
             return true;
         });
-    }, [rawData, search, netpayRange]);
+    }, [rawData, search, netpayRange, selectedMonth]);
 
 
     useEffect(() => {
         setSelectedQuarter(quarter || "ALL");
         setCurrentPage(1);
     }, [quarter]);
+
+    useEffect(() => {
+        setSelectedMonth(month || "ALL")
+    }, [month])
     useEffect(() => {
         setLocalCompany(company || "ALL");
     }, [company]);
@@ -134,13 +144,20 @@ const QuarterWiseTable = ({
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Month Wise Turnover Report");
         worksheet.columns = [
-            { header: "Month", key: "quarter", width: 30 },
-            { header: "Order No", key: "orderNo", width: 35 },
-            { header: "Order Date", key: "orderDate", width: 25 },
-            { header: "style Ref No", key: "styleRefNo", width: 60 },
-            { header: "Order Qty", key: "orderQty", width: 20 },
-            { header: "UOM", key: "orderUOM", width: 15 },
-            { header: "Turnover", key: "value", width: 30 },
+            { header: "Quarter", key: "quarter", width: 50 },
+
+            { header: "Month", key: "month", width: 20 },
+
+            { header: "Doc No", key: "docNo", width: 35 },
+            { header: "Doc Date", key: "docDate", width: 16 },
+            { header: "Sales Type", key: "salesType", width: 25 },
+            { header: "Customer", key: "customer", width: 45 },
+            { header: "Item Name", key: "itemName", width: 50 },
+
+            { header: "Invoice Qty", key: "invoiceQty", width: 18 },
+            { header: "UOM", key: "uom", width: 25 },
+            { header: "Rate", key: "rate", width: 21 },
+            { header: "Amount", key: "amount", width: 21 },
         ];
 
         /* ================= TITLE ================= */
@@ -324,6 +341,25 @@ const QuarterWiseTable = ({
                                     ))}
                                 </select>
                             </div>
+                            <div className="w-40">
+                                <select
+                                    value={selectedMonth || "ALL"}
+                                    onChange={(e) => {
+                                        setSelectedMonth(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border-2 rounded-md
+               border-blue-600 transition-all duration-200"
+                                >
+                                    <option value="ALL">ALL</option>
+
+                                    {monthOptions?.map((m) => (
+                                        <option key={m} value={m}>
+                                            {m}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             {/* <div className="w-40">
                                 <FinYear
                                     showBorder={true}
@@ -424,8 +460,9 @@ const QuarterWiseTable = ({
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
                                     <th className="border p-1 text-center w-4">S.No</th>
-                                    <th className="border p-1 text-center w-16">Quarter</th>
-                                    <th className="border p-1 text-center w-20">Doc No</th>
+                                    <th className="border p-1 text-center w-8">Quarter</th>
+                                    <th className="border p-1 text-center w-16">Month</th>
+                                    <th className="border p-1 text-center w-24">Doc No</th>
                                     <th className="border p-1 text-center w-[45px]">Doc Date</th>
                                     <th className="border p-1 text-center w-12">Sales Type</th>
                                     <th className="border p-1 text-center w-32">Customer</th>
@@ -465,6 +502,7 @@ const QuarterWiseTable = ({
                                             >
                                                 <td className="border p-1 text-center">{serialNo}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.qaurter}</td>
+                                                <td className="border p-1 pl-2 text-left">{row.month}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.docId}</td>
 
                                                 <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
