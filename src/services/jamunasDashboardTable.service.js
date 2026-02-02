@@ -140,7 +140,7 @@ export async function getYearlySalesTable(req, res) {
             `
  
     select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,
-h.color ,i.sizename ,g2.unitname uom, ,g2.unitname uom,b.invqty,round(b.amount/b.invqty,2) rate  ,
+h.color ,i.sizename ,g2.unitname uom,b.invqty,round(b.amount/b.invqty,2) rate  ,
 ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount       from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
@@ -149,7 +149,7 @@ ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount       from g
       join dtitemmast g on g.dtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes
-            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+    join gtunitmast g2 on g2.gtunitmastid  = b.uom 
  
       where c.compcode = ?
         AND d.finyr = ?
