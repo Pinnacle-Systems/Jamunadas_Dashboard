@@ -23,7 +23,7 @@ const jdasDbConfig = {
   host: "203.95.216.155",
   database: "pssjdas",
   port: 3555,
-  connectionLimit: 1000,
+  connectionLimit: 10,
 };
 
 let jdasConnectionPool;
@@ -37,22 +37,22 @@ export const getJDASConnectionPool = () => {
   return jdasConnectionPool;
 };
 
-export const getJDASConnection = async (res) => {
-  let connection;
-  try {
-    connection = await mariadb.createConnection({
-      user: jdasDbConfig.user,
-      password: jdasDbConfig.password,
-      database: jdasDbConfig.database,
-      host: jdasDbConfig.host,
-      port: jdasDbConfig.port,
-    });
-    console.log("✅ MariaDB Connection Successful!");
-    return connection;
-  } catch (err) {
-    return res.json({ statusCode: 1, message: "Database Connection Failed" });
-  }
-};
+// export const getJDASConnection = async (res) => {
+//   let connection;
+//   try {
+//     connection = await mariadb.createConnection({
+//       user: jdasDbConfig.user,
+//       password: jdasDbConfig.password,
+//       database: jdasDbConfig.database,
+//       host: jdasDbConfig.host,
+//       port: jdasDbConfig.port,
+//     });
+//     console.log("✅ MariaDB Connection Successful!");
+//     return connection;
+//   } catch (err) {
+//     return res.json({ statusCode: 1, message: "Database Connection Failed" });
+//   }
+// };
 
 export async function getConnection(res) {
   let connection;

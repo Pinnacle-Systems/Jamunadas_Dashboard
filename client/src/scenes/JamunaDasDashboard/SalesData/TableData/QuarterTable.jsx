@@ -15,7 +15,7 @@ import { useGetQuarterSalesTableQuery } from
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
-import FinYear from "../../../../components/FinYear";
+// import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
     year, quarter, company, closeTable, finYrData, quarterOptions
 }) => {
@@ -134,13 +134,20 @@ const QuarterWiseTable = ({
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Month Wise Turnover Report");
         worksheet.columns = [
-            { header: "Month", key: "quarter", width: 30 },
-            { header: "Order No", key: "orderNo", width: 35 },
-            { header: "Order Date", key: "orderDate", width: 25 },
-            { header: "style Ref No", key: "styleRefNo", width: 60 },
-            { header: "Order Qty", key: "orderQty", width: 20 },
-            { header: "UOM", key: "orderUOM", width: 15 },
-            { header: "Turnover", key: "value", width: 30 },
+            { header: "Quarter", key: "quarter", width: 50 },
+
+            { header: "Month", key: "month", width: 20 },
+
+            { header: "Doc No", key: "docNo", width: 35 },
+            { header: "Doc Date", key: "docDate", width: 16 },
+            { header: "Sales Type", key: "salesType", width: 25 },
+            { header: "Customer", key: "customer", width: 45 },
+            { header: "Item Name", key: "itemName", width: 50 },
+
+            { header: "Invoice Qty", key: "invoiceQty", width: 18 },
+            { header: "UOM", key: "uom", width: 25 },
+            { header: "Rate", key: "rate", width: 21 },
+            { header: "Amount", key: "amount", width: 21 },
         ];
 
         /* ================= TITLE ================= */

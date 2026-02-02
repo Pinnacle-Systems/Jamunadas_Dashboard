@@ -15,9 +15,10 @@ import { useGetTopTenCustomerDailyTableQuery } from
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
-import FinYear from "../../../../components/FinYear";
+import moment from "moment";
+// import FinYear from "../../../../components/FinYear";
 const TopTenCustomerTodayTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions , setLocalCompany , setSelectedCustomer , localCompany , selectedCustomer
+    year, customer, company, closeTable, finYrData, customerOptions, setLocalCompany, setSelectedCustomer, localCompany, selectedCustomer
 }) => {
 
     console.log(year, customer, company, localCompany, selectedCustomer, "receivedparams")
@@ -123,6 +124,13 @@ const TopTenCustomerTodayTable = ({
         (currentPage - 1) * recordsPerPage,
         currentPage * recordsPerPage
     );
+    // ✅ EXCEL EXPORT
+    const formateDate = (date) => {
+        if (!date) return
+
+        return moment(date).format("DD-MM-YYYY")
+
+    }
 
     // ✅ EXCEL EXPORT
     const downloadExcel = async () => {
@@ -132,20 +140,24 @@ const TopTenCustomerTodayTable = ({
         }
 
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Month Wise Turnover Report");
+        const worksheet = workbook.addWorksheet("Top Ten Customer Today Sales Report");
         worksheet.columns = [
-            { header: "Month", key: "month", width: 30 },
-            { header: "Order No", key: "orderNo", width: 35 },
-            { header: "Order Date", key: "orderDate", width: 25 },
-            { header: "style Ref No", key: "styleRefNo", width: 60 },
-            { header: "Order Qty", key: "orderQty", width: 20 },
-            { header: "UOM", key: "orderUOM", width: 15 },
-            { header: "Turnover", key: "value", width: 30 },
+            { header: "Customer", key: "customer", width: 45 },
+            { header: "Month", key: "month", width: 20 },
+
+            { header: "Doc No", key: "docNo", width: 35 },
+            { header: "Doc Date", key: "docDate", width: 16 },
+            { header: "Sales Type", key: "salesType", width: 25 },
+            { header: "Item Name", key: "itemName", width: 50 },
+            { header: "Invoice Qty", key: "invoiceQty", width: 18 },
+            { header: "UOM", key: "uom", width: 25 },
+            { header: "Rate", key: "rate", width: 21 },
+            { header: "Amount", key: "amount", width: 21 },
         ];
 
         /* ================= TITLE ================= */
-        worksheet.insertRow(1, ["Month Wise Turnover Report"]);
-        worksheet.mergeCells("A1:G1");
+        worksheet.insertRow(1, ["Top Ten Customer Today Sales Report"]);
+        worksheet.mergeCells("A1:J1");
 
         const titleCell = worksheet.getCell("A1");
         titleCell.font = { bold: true, size: 14 };
@@ -157,10 +169,12 @@ const TopTenCustomerTodayTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            disableFinYear: true,
             localCompany,
-            dynamicField: "Month",
+            dynamicField: "Customer",
+
             dynamicValue: selectedCustomer
+
 
         });
 
@@ -189,13 +203,16 @@ const TopTenCustomerTodayTable = ({
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
             worksheet.addRow({
+                customer: r.customer,
                 month: r.month,
-                orderNo: r.orderNo,
-                orderDate: r.orderDate?.split("T")[0]?.split("-")?.reverse()?.join("-") || '',
-                styleRefNo: r.styleRefNo,
-                orderQty: r.orderQty,
-                orderUOM: r.orderUOM,
-                value: Number(r.value || 0),
+                docNo: r.docId,
+                docDate: formateDate(r.docDate),
+                salesType: r.salesType,
+                itemName: r.itemName,
+                invoiceQty: Number(r.invoiceQty || 0),
+                uom: r.uom,
+                rate: Number(r.rate || 0),
+                amount: Number(r.amount || 0)
             });
         });
 
@@ -203,24 +220,30 @@ const TopTenCustomerTodayTable = ({
             if (rowNumber <= 3) return;
 
             row.height = 22;
+            row.getCell("customer").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
             row.getCell("month").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderDate").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("styleRefNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderQty").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
-            row.getCell("orderUOM").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("value").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("docNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("docDate").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("salesType").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("itemName").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("invoiceQty").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("uom").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("rate").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("amount").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
         });
 
         // ================= TOTAL ROW =================
         const totalRow = worksheet.addRow({
-            month: "",
-            orderNo: "",
-            orderDate: "",
-            styleRefNo: "",
-            orderQty: "",
-            orderUOM: "TOTAL",
-            value: totalTurnOver,
+            customer: "",
+            month: '',
+            docNo: "",
+            docDate: "",
+            salesType: "",
+            itemName: "",
+            invoiceQty: "",
+            uom: "",
+            rate: "Total",
+            amount: totalTurnOver,
         });
 
         totalRow.height = 24;
@@ -234,13 +257,15 @@ const TopTenCustomerTodayTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 7 ? "right" : "center",
+                horizontal: colNumber === 10 ? "right" : "center",
                 indent: 1
             };
         });
-        worksheet.getColumn("orderDate").numFmt = "dd-mm-yyyy";
+        worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
+        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
-        worksheet.getColumn("value").numFmt = '₹ #,##,##0.00';
+        worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
+        worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
 
         /* ================= FREEZE ================= */
         worksheet.views = [{ state: "frozen", ySplit: 3 }];
@@ -250,7 +275,7 @@ const TopTenCustomerTodayTable = ({
             new Blob([buffer], {
                 type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             }),
-            "Month Wise Turnover Report.xlsx"
+            "Top Ten Customer Today Sales Report.xlsx"
         );
     };
 
@@ -462,7 +487,7 @@ const TopTenCustomerTodayTable = ({
                                                 <td className="border p-1 pl-2 text-left">{row.month}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.docId}</td>
 
-                                                <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
+                                                <td className="border p-1 pl-2 text-left ">{formateDate(row.docDate)}</td>
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
 
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
