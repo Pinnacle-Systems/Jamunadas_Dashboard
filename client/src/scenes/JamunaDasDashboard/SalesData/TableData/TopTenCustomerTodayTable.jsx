@@ -17,17 +17,17 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 const TopTenCustomerTodayTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions
+    year, customer, company, closeTable, finYrData, customerOptions , setLocalCompany , setSelectedCustomer , localCompany , selectedCustomer
 }) => {
 
-    console.log(year, customer, company, closeTable, finYrData, "receivedparams")
+    console.log(year, customer, company, localCompany, selectedCustomer, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
         max: Infinity,
     });
-    const [selectedCustomer, setSelectedCustomer] = useState(customer || "ALL");
-    const [localCompany, setLocalCompany] = useState(company || "ALL");
+    // const [selectedCustomer, setSelectedCustomer] = useState(customer || "ALL");
+    // const [localCompany, setLocalCompany] = useState(company || "ALL");
     const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
@@ -39,12 +39,12 @@ const TopTenCustomerTodayTable = ({
         useGetTopTenCustomerDailyTableQuery(
             {
                 params: {
-                    companyName: localCompany === "ALL" ? undefined : localCompany,
+                    companyName: localCompany == "ALL" ? undefined : localCompany,
                     finYear: localYear,
                     customer: selectedCustomer
                 },
             },
-            { skip: !localYear }
+            // { skip: !localYear }
         );
 
     const rawData = useMemo(() => {

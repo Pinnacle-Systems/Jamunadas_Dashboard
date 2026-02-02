@@ -215,6 +215,10 @@ const StyleTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
 
+
+  console.log({selectedYear, selectedCompany, finYrData},"StyleTopTenMonth");
+  
+
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,

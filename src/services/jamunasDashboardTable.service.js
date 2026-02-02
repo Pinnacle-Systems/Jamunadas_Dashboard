@@ -11,60 +11,28 @@ export async function getMonthlySalesTable(req, res) {
 
         console.log(companyName, "req.query for getMonthlySalesTable")
 
-        //     const result = await pool.query(
-        //         `
-
-        //   select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom    from gtsalesinv a
-        //   JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
-        //   JOIN gtcompmast c ON c.gtcompmastid = a.compcode
-        //   JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
-        //   JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
-        //   join gtitemmast g on g.gtitemmastid = b.itemname 
-        //   join gtcolormast h on h.gtcolormastid  = b.color 
-        //   join sizemast i on i.sizemastid = b.sizes 
-        //   where c.compcode = ?
-        //     AND d.finyr = ? AND e.payperiod  = ?
-
-
-
-        //   `,
-        //         [companyName, finYear, month]       
-
-        //     );
 
         const result = await pool.query(
             `
- 
-select
-	month_frq.payperiod,
-	comp_master.compcode,
-	sales_inv.docid,
-	sales_inv.docdate,
-	sales_inv.salestype,
-	sales_inv.customer,
-	item_master.itemname,
-	color_master.color,
-	size_master.sizename,
-	sales_inv_det.invqty,
-	round(sales_inv_det.amount/sales_inv_det.invqty,2) rate,
-	sales_inv_det.amount,
-	item_master.uom    
-from gtsalesinv sales_inv 
-	join gtsalesinvdet sales_inv_det on sales_inv.gtsalesinvid = sales_inv_det.gtsalesinvid
-	join gtcompmast comp_master on comp_master.gtcompmastid = sales_inv.compcode
-	join gtitemmast item_master on sales_inv_det.itemname = item_master.gtitemmastid
-	join gtcolormast color_master on sales_inv_det.color = color_master.gtcolormastid
-	join sizemast size_master on sales_inv_det.sizes = size_master.sizemastid 
-	join hrmfrq month_frq on sales_inv.docdate between month_frq.mstdt and month_frq.mendt  
-where
-	comp_master.compcode = ?
-	and month_frq.payperiod = ?
+
+      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,
+round(b.amount/b.invqty,2) rate  ,round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom    from gtsalesinv a
+      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
+      join dtitemmast g on g.dtitemmastid = b.itemname
+      join gtcolormast h on h.gtcolormastid  = b.color 
+      join sizemast i on i.sizemastid = b.sizes 
+      where c.compcode = ?
+        AND d.finyr = ? AND e.payperiod  = ?
+
 
         
      
 
       `,
-            [companyName, month]
+            [companyName, finYear, month]
 
         );
 
@@ -108,38 +76,18 @@ export async function getQuarterSalesTable(req, res) {
             `
  
       SELECT
-    c.compcode,
-    d.finyr,
-    e.quarter AS salesquarter,
-    a.docid,
-    a.docdate,
-    a.salestype,
-    a.customer,
-    g.itemname,
-    h.color,
-    i.sizename,
-    b.invqty,
-   round(b.amount/b.invqty,2) rate ,
-    b.amount,g.uom 
+    c.compcode,    d.finyr,    e.quarter AS salesquarter,    a.docid,    a.docdate,    a.salestype,    a.customer,    g.itemname,    h.color,    i.sizename,    
+    b.invqty,   round(b.amount/b.invqty,2) rate ,
+    round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom 
 FROM gtsalesinv a
-JOIN gtsalesinvdet b
-    ON b.gtsalesinvid = a.gtsalesinvid
-JOIN gtcompmast c
-    ON c.gtcompmastid = a.compcode
-JOIN gtfinancialyear d
-    ON d.gtfinancialyearid = a.finyear
-JOIN gtfinancialyeardtl e
-    ON e.gtfinancialyearid = d.gtfinancialyearid
-   AND a.docdate BETWEEN e.pstartdate AND e.penddate
-JOIN gtitemmast g
-    ON g.gtitemmastid = b.itemname
-JOIN gtcolormast h
-    ON h.gtcolormastid = b.color
-JOIN sizemast i
-    ON i.sizemastid = b.sizes
-WHERE c.compcode = ?
-  AND d.finyr = ? AND e.quarter = ?
-
+JOIN gtsalesinvdet b     ON b.gtsalesinvid = a.gtsalesinvid
+JOIN gtcompmast c     ON c.gtcompmastid = a.compcode
+JOIN gtfinancialyear d     ON d.gtfinancialyearid = a.finyear
+JOIN gtfinancialyeardtl e     ON e.gtfinancialyearid = d.gtfinancialyearid    AND a.docdate BETWEEN e.pstartdate AND e.penddate
+JOIN dtitemmast g     ON g.dtitemmastid = b.itemname 
+JOIN gtcolormast h     ON h.gtcolormastid = b.color 
+JOIN sizemast i     ON i.sizemastid = b.sizes
+WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
 
       `,
             [companyName, finYear, quarter]   // ✅ positional params
@@ -186,19 +134,20 @@ export async function getYearlySalesTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom      from gtsalesinv a
+    select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,
+h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
-      join gtitemmast g on g.gtitemmastid = b.itemname 
+      join dtitemmast g on g.dtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?
         AND d.finyr = ?
 
-
-      `,
+`,
             [companyName, finYear]   // ✅ positional params
 
         );
@@ -246,7 +195,9 @@ export async function getTopTenCustomerSalesYearlyTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount,g.uom       from gtsalesinv a
+    select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,
+       round(b.amount/b.invqty,2) rate  ,
+       round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -255,7 +206,7 @@ export async function getTopTenCustomerSalesYearlyTable(req, res) {
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?
-        AND d.finyr = ? AND a.customer = ?
+        AND d.finyr =? AND a.customer = ?
   
 
       `,
@@ -301,8 +252,8 @@ export async function getTopTenCustomerSalesMonthTable(req, res) {
 
         const result = await pool.query(
             `
- 
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount,g.uom       from gtsalesinv a
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+      round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -312,6 +263,7 @@ export async function getTopTenCustomerSalesMonthTable(req, res) {
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?
         AND d.finyr = ? AND a.customer = ? AND e.payperiod  = ?
+
       
 
       `,
@@ -358,7 +310,9 @@ export async function getTopTenCustomerSalesWeekTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom      from gtsalesinv a
+
+      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+  round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount ,g.uom      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -367,6 +321,7 @@ export async function getTopTenCustomerSalesWeekTable(req, res) {
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?  AND a.customer = ?
+      AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
  
 
       `,
@@ -413,7 +368,8 @@ export async function getTopTenCustomerSalesdailyTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount,g.uom       from gtsalesinv a
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount,g.uom       from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -422,6 +378,7 @@ export async function getTopTenCustomerSalesdailyTable(req, res) {
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
       where c.compcode = ?  AND a.customer = ?
+      AND a.docdate between CURRENT_DATE and CURRENT_DATE
 
       `,
             [companyName, customer]   // ✅ positional params
@@ -471,16 +428,35 @@ export async function getTopTenItemSalesYearTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom      from gtsalesinv a
-      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
-      JOIN gtcompmast c ON c.gtcompmastid = a.compcode
-      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
-      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
-      join gtitemmast g on g.gtitemmastid = b.itemname 
-      join gtcolormast h on h.gtcolormastid  = b.color 
-      join sizemast i on i.sizemastid = b.sizes 
-      where c.compcode = ?
-        AND d.finyr = ? AND g.itemname = ? 
+SELECT 
+    e.payperiod,
+    c.compcode,
+    d.finyr,
+    a.docid,
+    a.docdate,
+    a.salestype,
+    a.customer,
+    g.itemname,
+    h.color,
+    i.sizename,
+    b.invqty,
+    ROUND(b.amount / b.invqty, 2) AS rate,
+    ROUND((a.netamt * (b.amount / a.gramt)), 2) AS amount,
+    g.uom
+FROM gtsalesinv a
+JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+JOIN hrmfrq e 
+  ON e.gtfinancialyearid = d.gtfinancialyearid 
+ AND a.docdate BETWEEN e.mstdt AND e.mendt
+JOIN gtitemmast g ON g.gtitemmastid = b.itemname 
+JOIN gtcolormast h ON h.gtcolormastid = b.color 
+JOIN sizemast i ON i.sizemastid = b.sizes 
+WHERE c.compcode = ?
+  AND d.finyr = ?
+  AND g.itemname = ?
+;
 
       `,
             [companyName, finYear, item]   // ✅ positional params
@@ -526,7 +502,9 @@ export async function getTopTenItemSalesMonthTable(req, res) {
         const result = await pool.query(
             `
  
-      select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,b.amount ,g.uom      from gtsalesinv a
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,
+      i.sizename ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount ,g.uom      from gtsalesinv a
       JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
@@ -534,7 +512,7 @@ export async function getTopTenItemSalesMonthTable(req, res) {
       join gtitemmast g on g.gtitemmastid = b.itemname 
       join gtcolormast h on h.gtcolormastid  = b.color 
       join sizemast i on i.sizemastid = b.sizes 
-      where c.compcode = ?
+      where c.compcode = ?  
         AND d.finyr = ? AND g.itemname = ? AND e.payperiod  = ?
       
 

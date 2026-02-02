@@ -64,13 +64,12 @@ export async function getMonthlySales(req, res) {
 
         const result = await pool.query(
             `
-      SELECT 
+    SELECT 
         e.payperiod,
            d.finyr,
         c.compcode,
-        SUM(b.delqty * a.netamt) AS totalsales
+        SUM(a.netamt) AS totalsales
       FROM gtsalesinv a
-      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
       JOIN gtcompmast c ON c.gtcompmastid = a.compcode
       JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
       JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid
@@ -154,18 +153,16 @@ export async function getYearlySales(req, res) {
 
         const result = await pool.query(
             `
-  select d.finyr as salesyear,c.compcode,sum(b.delqty * a.netamt) as totalsales from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
-join gtcompmast c on c.gtcompmastid =a.compcode 
-join gtfinancialyear d on d.gtfinancialyearid =a.finyear 
-join hrmfrq e on e.gtfinancialyearid=d.gtfinancialyearid 
-   WHERE c.compcode = ?
-        AND d.finyr = ? 
-AND a.docdate between e.mstdt and e.mendt
-group by d.finyr
-order by salesyear
+select d.finyr,e.compcode,sum(a.netamt) as totalsales
+from gtsalesinv a
+join gtcompmast e on e.gtcompmastid = a.compcode
+join gtfinancialyear d on d.gtfinancialyearid = a.finyear
+ WHERE e.compcode = ? AND d.finyr = ?
+group by d.finyr,e.compcode
+order by totalsales desc 
+limit 10 
       `,
-            [selectedCompany, year]   // ✅ positional params
+            [selectedCompany, year]
 
         );
 
@@ -199,15 +196,12 @@ export async function getTopTenCustomer(req, res) {
 
         const result = await pool.query(
             `
-  select d.finyr,e.compcode,ee.compname as customer,sum(b.delqty * a.netamt) as totalsales
+ select d.finyr,e.compcode,a.customer as customer,sum(a.netamt) as totalsales
 from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
-join gtcompmast e on e.gtcompmastid = a.compcode
-join gtcompmast ee on ee.compname=a.customer 
+join gtcompmast e on e.gtcompmastid = a.compcode 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
  WHERE e.compcode = ? AND d.finyr = ? 
-group by d.finyr,ee.compname
+group by d.finyr,a.customer,e.compcode
 order by totalsales desc  
 limit 10
       `,
@@ -243,15 +237,13 @@ export async function getTopTenCustomerMonth(req, res) {
 
         const result = await pool.query(
             `
-select f.payperiod,d.finyr,e.compcode,ee.compname as customer,sum(b.delqty * a.netamt) as totalsales
+select f.payperiod,d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
 from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
-join gtcompmast e on e.gtcompmastid = a.compcode
-join gtcompmast ee on ee.compname=a.customer 
+join gtcompmast e on e.gtcompmastid = a.compcode 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
-where e.compcode = ? AND d.finyr = ? and (a.docdate between f.mstdt and f.mendt) AND f.payperiod=?
-group by d.finyr,ee.compname
+join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
+where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ?
+group by f.payperiod,d.finyr,e.compcode,a.customer
 order by totalsales desc  
 limit 10
       `,
@@ -289,15 +281,13 @@ export async function getTopTenCustomerWeek(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,ee.compname as customer,sum(b.delqty * a.netamt) as totalsales
+    select d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
 from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
-join gtcompmast ee on ee.compname=a.customer 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 where e.compcode = ?
 AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
-group by d.finyr,ee.compname
+group by  d.finyr,e.compcode,a.customer
 order by totalsales desc  
 limit 10
       `,
@@ -333,15 +323,13 @@ export async function getTopTenCustomerToday(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,ee.compname as customer,sum(b.delqty * a.netamt) as totalsales
+select d.finyr,e.compcode,a.customer,sum(a.netamt) as totalsales
 from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
-join gtcompmast ee on ee.compname=a.customer 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
 where e.compcode = ?
 AND a.docdate between CURRENT_DATE and CURRENT_DATE
-group by d.finyr,ee.compname
+group by d.finyr,e.compcode,a.customer
 order by totalsales desc  
 limit 10
 
@@ -383,17 +371,17 @@ export async function getTopTenItemYear(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,c.itemname,sum(b.delqty * a.netamt) as totalsales
+select d.finyr,e.compcode,c.itemname,SUM(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
 join gtitemmast c on c.gtitemmastid = b.itemname
-where e.compcode = ? and d.finyr = ? AND a.docdate between f.mstdt and f.mendt
-group by d.finyr,c.itemname
+where e.compcode = ? and d.finyr = ?
+group by d.finyr,c.itemname,e.compcode
 order by totalsales desc  
 limit 10
+
       `,
             [selectedCompany, selectedYear]   // ✅ positional params
 
@@ -427,17 +415,19 @@ export async function getTopTenItemMonth(req, res) {
 
         const result = await pool.query(
             `
-select f.payperiod,d.finyr,e.compcode,c.itemname,sum(b.delqty * a.netamt) as totalsales
+select a.* from 
+(select f.payperiod,d.finyr,e.compcode,c.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtcompmast ee on ee.compname=a.customer 
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
+join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
 join gtitemmast c on c.gtitemmastid = b.itemname
-where e.compcode = ? AND d.finyr = ? and (a.docdate between f.mstdt and f.mendt) AND f.payperiod=?
-group by d.finyr,c.itemname
-order by totalsales desc  
+where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ?
+group by f.payperiod,d.finyr,e.compcode,c.itemname
+) a
+order by a.totalsales desc  
 limit 10
       `,
             [selectedCompany, selectedYear, selectMonths]   // ✅ positional params

@@ -113,6 +113,7 @@ const MonthWiseTable = ({
     }, [company]);
 
 
+        console.log(filteredData.length,"filteredData?.length")
 
     // ✅ TOTAL
     const totalTurnOver = useMemo(

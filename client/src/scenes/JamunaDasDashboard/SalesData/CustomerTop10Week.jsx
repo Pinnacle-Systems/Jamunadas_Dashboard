@@ -45,9 +45,10 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
   const chartData = useMemo(() => {
     if (!Array.isArray(response?.data)) return [];
 
-    return response.data
+    return response?.data
       .map((item) => ({
         customer: item.customer,
+        company: item?.company,
         y: Number(item.totalSales),
       }))
       .sort((a, b) => b.y - a.y)
@@ -60,7 +61,7 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
   const top3Customers = useMemo(() => chartData.slice(0, 3), [chartData]);
 
   /* ---------------- Lollipop Data ---------------- */
-  const stemData = chartData.map((item, index) => ({
+  const stemData = chartData?.map((item, index) => ({
     x: index,
     low: 0,
     high: item.y,
@@ -69,7 +70,7 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     color: COLORS[index % COLORS.length], // 🎨 stick color
   }));
 
-  const dotData = chartData.map((item, index) => ({
+  const dotData = chartData?.map((item, index) => ({
     x: index,
     y: item.y,
     customer: item.customer,
@@ -140,7 +141,6 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     },
 
     series: [
-      /* 🦯 STEM */
       {
         type: "columnrange",
         data: stemData,
@@ -199,7 +199,14 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     ],
   };
 
-  /* ---------------- Render ---------------- */
+
+
+
+  console.log(tableParams, "tableParamstableParams");
+
+
+
+
   return (
     <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
       <CardHeader

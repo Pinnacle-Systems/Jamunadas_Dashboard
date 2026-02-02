@@ -39,12 +39,12 @@ const TopTenCustomerWeekWiseTable = ({
         useGetTopTenCustomerWeekTableQuery(
             {
                 params: {
-                    companyName: localCompany === "ALL" ? undefined : localCompany,
+                    companyName: company,
                     finYear: localYear,
                     customer: customer
                 },
             },
-            { skip: !localYear }
+            // { skip: !localYear }
         );
 
     const rawData = useMemo(() => {

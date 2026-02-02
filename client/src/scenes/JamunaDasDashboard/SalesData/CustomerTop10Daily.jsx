@@ -16,6 +16,9 @@ const CustomerTop10Daily = ({ selectedYear, selectedCompany }) => {
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
 
+  const [selectedCustomer, setSelectedCustomer] = useState();
+  const [localCompany, setLocalCompany] = useState();
+
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -74,6 +77,8 @@ const CustomerTop10Daily = ({ selectedYear, selectedCompany }) => {
                 customer: this.customer,
                 company: this.company,
               });
+              setLocalCompany(this.company)
+              setSelectedCustomer(this.customer)
               setShowTable(true);
             },
           },
@@ -125,6 +130,10 @@ const CustomerTop10Daily = ({ selectedYear, selectedCompany }) => {
           customer={tableParams.customer}
           company={tableParams.company}
           customerOptions={customerOptions}
+          setLocalCompany={setLocalCompany}
+          localCompany={localCompany}
+          setSelectedCustomer={setSelectedCustomer}
+          selectedCustomer={selectedCustomer}
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
