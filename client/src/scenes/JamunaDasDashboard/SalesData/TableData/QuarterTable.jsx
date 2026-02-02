@@ -15,6 +15,7 @@ import { useGetQuarterSalesTableQuery } from
 
 import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
+import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
     year, quarter, company, closeTable, finYrData, quarterOptions, monthOptions, month,
@@ -133,7 +134,12 @@ const QuarterWiseTable = ({
         (currentPage - 1) * recordsPerPage,
         currentPage * recordsPerPage
     );
+    const formateDate = (date) => {
+        if (!date) return
 
+        return moment(date).format("DD-MM-YYYY")
+
+    }
     // ✅ EXCEL EXPORT
     const downloadExcel = async () => {
         if (!filteredData.length) {
@@ -142,11 +148,11 @@ const QuarterWiseTable = ({
         }
 
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Month Wise Turnover Report");
+        const worksheet = workbook.addWorksheet("Quarter Wise Sales Report");
         worksheet.columns = [
-            { header: "Quarter", key: "quarter", width: 50 },
+            { header: "Quarter", key: "quarter", width: 20 },
 
-            { header: "Month", key: "month", width: 20 },
+            { header: "Month", key: "month", width: 25 },
 
             { header: "Doc No", key: "docNo", width: 35 },
             { header: "Doc Date", key: "docDate", width: 16 },
@@ -161,7 +167,7 @@ const QuarterWiseTable = ({
         ];
 
         /* ================= TITLE ================= */
-        worksheet.insertRow(1, ["Month Wise Turnover Report"]);
+        worksheet.insertRow(1, ["Quarter Wise Sales Report"]);
         worksheet.mergeCells("A1:G1");
 
         const titleCell = worksheet.getCell("A1");
@@ -176,8 +182,10 @@ const QuarterWiseTable = ({
             totalColumns: 3,
             selectedYear: localYear,
             localCompany,
-            dynamicField: "Month",
-            dynamicValue: selectedQuarter
+            dynamicField: "Quarter",
+            dynamicValue: selectedQuarter,
+            secondDynamicField: "Month",
+            seconddynamicValue: selectedMonth
 
         });
 
@@ -206,13 +214,17 @@ const QuarterWiseTable = ({
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
             worksheet.addRow({
-                quarter: r.quarter,
-                orderNo: r.orderNo,
-                orderDate: r.orderDate?.split("T")[0]?.split("-")?.reverse()?.join("-") || '',
-                styleRefNo: r.styleRefNo,
-                orderQty: r.orderQty,
-                orderUOM: r.orderUOM,
-                value: Number(r.value || 0),
+                quarter: r.qaurter,
+                month: r.month,
+                docNo: r.docId,
+                docDate: formateDate(r.docDate),
+                salesType: r.salesType,
+                customer: r.customer,
+                itemName: r.itemName,
+                invoiceQty: Number(r.invoiceQty || 0),
+                uom: r.uom,
+                rate: Number(r.rate || 0),
+                amount: Number(r.amount || 0)
             });
         });
 
@@ -221,23 +233,31 @@ const QuarterWiseTable = ({
 
             row.height = 22;
             row.getCell("quarter").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderDate").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("styleRefNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("orderQty").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
-            row.getCell("orderUOM").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-            row.getCell("value").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("month").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("docNo").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("docDate").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("salesType").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("customer").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("itemName").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("invoiceQty").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("uom").alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+            row.getCell("rate").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
+            row.getCell("amount").alignment = { horizontal: "right", vertical: "middle", indent: 1 };
         });
 
         // ================= TOTAL ROW =================
         const totalRow = worksheet.addRow({
             quarter: "",
-            orderNo: "",
-            orderDate: "",
-            styleRefNo: "",
-            orderQty: "",
-            orderUOM: "TOTAL",
-            value: totalTurnOver,
+            month: "",
+            docNo: "",
+            docDate: "",
+            salesType: "",
+            customer: "",
+            itemName: "",
+            invoiceQty: "",
+            uom: "",
+            rate: "Total",
+            amount: totalTurnOver,
         });
 
         totalRow.height = 24;
@@ -251,13 +271,15 @@ const QuarterWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 7 ? "right" : "center",
+                horizontal: colNumber === 11 ? "right" : "center",
                 indent: 1
             };
         });
-        worksheet.getColumn("orderDate").numFmt = "dd-mm-yyyy";
+        worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
+        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
-        worksheet.getColumn("value").numFmt = '₹ #,##,##0.00';
+        worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
+        worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
 
         /* ================= FREEZE ================= */
         worksheet.views = [{ state: "frozen", ySplit: 3 }];
@@ -267,7 +289,7 @@ const QuarterWiseTable = ({
             new Blob([buffer], {
                 type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             }),
-            "Month Wise Turnover Report.xlsx"
+            "Quarter Wise Sales Report.xlsx"
         );
     };
 
@@ -505,7 +527,7 @@ const QuarterWiseTable = ({
                                                 <td className="border p-1 pl-2 text-left">{row.month}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.docId}</td>
 
-                                                <td className="border p-1 pl-2 text-left ">{row.docDate?.split("T")[0]?.split("-")?.reverse()?.join("-")}</td>
+                                                <td className="border p-1 pl-2 text-left ">{formateDate(row.docDate)}</td>
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
