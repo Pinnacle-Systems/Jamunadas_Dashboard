@@ -43,7 +43,23 @@ const FinYear = ({
     });
 
     setMonths(monthList);
+
+
+    const now = new Date();
+    const currentMonthName = now.toLocaleString("default", { month: "long" });
+    const currentYear = now.getFullYear();
+
+    const currentMonthValue = `${currentMonthName} ${currentYear}`;
+
+    if (monthList?.includes(currentMonthValue)) {
+      setSelectmonths(currentMonthValue);
+    }
+
   }, [selectedYear]);
+
+
+
+
 
   return (
     <div className="max-w-md mx-auto">
