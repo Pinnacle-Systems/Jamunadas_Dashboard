@@ -98,6 +98,7 @@ WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
 
         const resp = result.map((sale) => ({
             qaurter: sale.salesquarter,
+            month:sale.mon,
             company: sale.compcode,
             finYear: sale.finyr,
             docId: sale.docid,

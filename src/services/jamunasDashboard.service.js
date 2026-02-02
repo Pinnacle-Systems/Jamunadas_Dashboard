@@ -120,12 +120,14 @@ where c.compcode = ? and   d.finyr = ?
 group by d.finyr,c.compcode,e.perioddesc,e.quarter,e.pstartdate,e.penddate
 order by e.pstartdate
       `,
-            [selectedCompany, selectedYear]   
+            [selectedCompany, selectedYear]
 
         );
 
         const resp = result.map((sale) => ({
             finYear: sale.finyr,
+            month: sale.mon,
+
             company: sale.compcode,
             quarter: sale.salesquarter,
             totalSales: sale.totalsales,
