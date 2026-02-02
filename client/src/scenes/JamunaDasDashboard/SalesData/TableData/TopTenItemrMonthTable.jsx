@@ -182,7 +182,7 @@ const TopTenItemMonthWiseTable = ({
             selectedYear: localYear,
             localCompany,
             dynamicField: "Month",
-            dynamicValue: selectedMonth,
+            dynamicValue: selectMonths,
             secondDynamicField: "Item",
 
             seconddynamicValue: itemName
