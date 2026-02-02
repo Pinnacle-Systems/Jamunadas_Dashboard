@@ -16,11 +16,22 @@ const COLORS = [
 ];
 
 
-const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
+const CustomerTopTenMonth = ({  yearFilter, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+  const [tempMonth,setTempMonth] = useState("")
+
+
+
+  useEffect(() => {
+    setSelectedYear(yearFilter)
+  }, [yearFilter])
+
+
+
   console.log(selectMonths, "selectMonths");
 
 
@@ -146,7 +157,10 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
             <FinYear
               selectedYear={selectedYear}
               selectmonths={selectMonths}
-              setSelectmonths={setSelectMonths}
+              setSelectmonths={(value) => {
+                setSelectMonths(value)
+                setTempMonth(value)
+              } }
               autoBorder={true}
             />
           </Box>
@@ -181,7 +195,13 @@ const CustomerTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedYear(yearFilter)
+            setSelectMonths(tempMonth)
           }}
+          setSelectedYear={setSelectedYear}
+          selectedYear={selectedYear}
+          selectMonths={selectMonths}
+          setSelectMonths={setSelectMonths}
         />
       )}
     </Card>
