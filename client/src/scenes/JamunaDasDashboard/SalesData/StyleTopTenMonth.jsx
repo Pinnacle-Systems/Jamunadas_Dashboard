@@ -209,15 +209,15 @@ import { useGetTopTenItemMonthQuery } from "../../../redux/service/jamunasDashbo
 import FinYear from "../../../components/FinYear.js";
 import TopTenItemMonthWiseTable from "./TableData/TopTenItemrMonthTable.jsx";
 
-const StyleTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
+const StyleTopTenMonth = ({ selectedYear, setSelectedYear , selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
 
 
-  console.log({selectedYear, selectedCompany, finYrData},"StyleTopTenMonth");
-  
+  console.log({ selectedYear, selectedCompany, selectMonths }, "StyleTopTenMonth");
+
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -404,11 +404,15 @@ const StyleTopTenMonth = ({ selectedYear, selectedCompany, finYrData }) => {
           item={tableParams.itemName}
           company={tableParams.company}
           itemOptions={itemOptions}
+          setSelectedYear={setSelectedYear}
+          selectedYear={selectedYear}
           finYrData={finYrData}
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
           }}
+          selectMonths={selectMonths}          
+          setSelectMonths={setSelectMonths}
         />
       )}
     </Card>

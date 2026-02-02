@@ -17,19 +17,20 @@ import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 const TopTenItemMonthWiseTable = ({
-    year, item, company, closeTable, finYrData, itemOptions, month
+    year, item, company, closeTable, finYrData, itemOptions, month , selectedYear , setSelectedYear ,
+    selectMonths , setSelectMonths
 }) => {
 
-    console.log(month, year, item, company, closeTable, finYrData, "receivedparams")
+    console.log(selectMonths, year, item, company, finYrData, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
         max: Infinity,
     });
-    // const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
-    const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
+    const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
+    // const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(year);
+    const [localYear, setLocalYear] = useState(selectedYear);
     const [itemName,setItemName] = useState(item || "ALL")
 
     const [search, setSearch] = useState({});
@@ -44,7 +45,7 @@ const TopTenItemMonthWiseTable = ({
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: localYear,
                     item: itemName,
-                    month: selectedMonth
+                    month: selectMonths
                 },
             },
             { skip: !localYear }
@@ -107,7 +108,7 @@ const TopTenItemMonthWiseTable = ({
         setCurrentPage(1);
     }, [item]);
     useEffect(() => {
-        setSelectedMonth(month || "ALL");
+        setSelectMonths(month || "ALL");
         setCurrentPage(1);
     }, [month]);
     useEffect(() => {
@@ -281,6 +282,7 @@ const TopTenItemMonthWiseTable = ({
                                     value={localYear || ""}
                                     onChange={(e) => {
                                         setLocalYear(e.target.value);
+                                        setSelectedYear(e.target.value)
                                         setCurrentPage(1);
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
@@ -298,8 +300,8 @@ const TopTenItemMonthWiseTable = ({
                             <div className="w-44">
                                 <FinYear
                                     selectedYear={localYear}
-                                    selectmonths={selectedMonth}
-                                    setSelectmonths={setSelectedMonth}
+                                    selectmonths={selectMonths}
+                                    setSelectmonths={setSelectMonths}
                                     autoBorder={true}
 
                                 />
@@ -322,7 +324,7 @@ const TopTenItemMonthWiseTable = ({
 
                             <div className="w-72">
                                 <select
-                                    value={itemName || "ALL"}
+                                    value={itemName }
                                     onChange={(e) => {
                                         setItemName(e.target.value);
                                         setCurrentPage(1);
@@ -330,7 +332,7 @@ const TopTenItemMonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option value="ALL"></option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>
