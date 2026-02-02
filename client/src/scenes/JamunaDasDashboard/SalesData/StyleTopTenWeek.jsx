@@ -43,11 +43,20 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
         salesYear: item.salesYear,
       }));
   }, [response?.data]);
+
+
+
   const itemOptions = useMemo(() => {
     if (!Array.isArray(chartData)) return [];
     return [...new Set(chartData.map(item => item.itemName))];
   }, [chartData]);
+
+
+
   /* ---------- Top 3 Items ---------- */
+
+
+
   const top3Items = useMemo(() => {
     return chartData
       .slice()
@@ -128,10 +137,11 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
         name: "Sales",
         color: "#4c00ff",
         lineWidth: 2,
-        data: chartData.map((item, index) => ({
+        data: chartData?.map((item, index) => ({
           x: index,
           y: item.y,
           itemName: item.itemName,
+          company : item?.company
         })),
         marker: {
           fillColor: "#000",

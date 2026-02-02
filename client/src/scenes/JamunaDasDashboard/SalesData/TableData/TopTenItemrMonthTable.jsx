@@ -26,11 +26,11 @@ const TopTenItemMonthWiseTable = ({
         min: 0,
         max: Infinity,
     });
-    const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
+    // const [selectedCustomer, setSelectedCustomer] = useState(item || "ALL");
     const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
     const [localYear, setLocalYear] = useState(year);
-
+    const [itemName,setItemName] = useState(item || "ALL")
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +43,7 @@ const TopTenItemMonthWiseTable = ({
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: localYear,
-                    customer: selectedCustomer,
+                    item: itemName,
                     month: selectedMonth
                 },
             },
@@ -103,7 +103,7 @@ const TopTenItemMonthWiseTable = ({
 
 
     useEffect(() => {
-        setSelectedCustomer(item || "ALL");
+        setItemName(item || "ALL");
         setCurrentPage(1);
     }, [item]);
     useEffect(() => {
@@ -167,7 +167,7 @@ const TopTenItemMonthWiseTable = ({
             selectedYear: localYear,
             localCompany,
             dynamicField: "Month",
-            dynamicValue: selectedCustomer
+            dynamicValue: setItemName
 
         });
 
@@ -322,9 +322,9 @@ const TopTenItemMonthWiseTable = ({
 
                             <div className="w-72">
                                 <select
-                                    value={selectedCustomer || "ALL"}
+                                    value={itemName || "ALL"}
                                     onChange={(e) => {
-                                        setSelectedCustomer(e.target.value);
+                                        setItemName(e.target.value);
                                         setCurrentPage(1);
                                     }}
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md

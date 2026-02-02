@@ -20,7 +20,7 @@ const TopTenItemWeekTable = ({
     year, itemName, company, closeTable, finYrData, itemOptions
 }) => {
 
-    console.log(year, itemName, company, closeTable, finYrData, "receivedparams")
+    console.log(year, itemName, company,  finYrData, "receivedparams")
 
     const [netpayRange, setNetpayRange] = useState({
         min: 0,
@@ -44,7 +44,7 @@ const TopTenItemWeekTable = ({
                     item: selectedItem
                 },
             },
-            { skip: !localYear }
+            // { skip: !localYear }
         );
 
     const rawData = useMemo(() => {

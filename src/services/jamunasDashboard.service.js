@@ -467,17 +467,16 @@ export async function getTopTenItemWeek(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,c.itemname,sum(b.delqty * a.netamt) as totalsales
+
+  select d.finyr,e.compcode,g.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
  join gtfinancialyear d on d.gtfinancialyearid = a.finyear
- join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
-join hrwfrq t on t.gtfinancialyearid = d.gtfinancialyearid
-join gtitemmast c on c.gtitemmastid = b.itemname
+join dtitemmast g on g.dtitemmastid = b.itemname
 where e.compcode = ?
 AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
-group by d.finyr,c.itemname
+group by d.finyr,g.itemname,e.compcode
 order by totalsales desc  
 limit 10
       `,
@@ -513,17 +512,16 @@ export async function getTopTenItemToday(req, res) {
 
         const result = await pool.query(
             `
-select d.finyr,e.compcode,c.itemname,sum(b.delqty * a.netamt) as totalsales
+
+select d.finyr,e.compcode,g.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid
-join hrwfrq t on t.gtfinancialyearid = d.gtfinancialyearid
-join gtitemmast c on c.gtitemmastid = b.itemname
+join dtitemmast g on g.dtitemmastid = b.itemname
 where e.compcode = ?
 AND a.docdate between CURRENT_DATE and CURRENT_DATE
-group by d.finyr,c.itemname
+group by d.finyr,e.compcode,g.itemname
 order by totalsales desc  
 limit 10
 

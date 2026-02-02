@@ -44,7 +44,7 @@ const TopTenItemTodayTable = ({
                     item: selectedItem
                 },
             },
-            { skip: !localYear }
+            // { skip: !localYear }
         );
 
     const rawData = useMemo(() => {
