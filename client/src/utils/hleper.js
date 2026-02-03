@@ -3,7 +3,46 @@ import { forwardRef } from "react";
 import secureLocalStorage from "react-secure-storage";
 import { useState, useRef, useEffect } from "react";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
+
 import Select from "react-select";
+
+const UOM_DECIMALS = {
+  NOS: 0,
+  SET: 0,
+  DOZEN: 1,
+
+  MTR: 2,
+  FEET: 3,
+  YARD: 3,
+  SQFT: 3,
+
+  KGS: 3,
+};
+
+
+
+
+export const formatQtyByUOM = (qty, uom) => {
+  if (qty === null || qty === undefined) return "-";
+
+  const decimals = UOM_DECIMALS[uom?.toUpperCase()] ?? 2;
+
+  return Number(qty).toFixed(decimals);
+};
+
+
+
+export const getExcelQtyFormatByUOM = (uom) => {
+  const decimals = UOM_DECIMALS[uom?.toUpperCase()] ?? 2;
+
+  // Build Excel number format dynamically
+  if (decimals === 0) return "#,##,##0";
+
+  return `#,##,##0.${"0".repeat(decimals)}`;
+};
+
+
+
 export const addInsightsRow = ({
   worksheet,
   startRow = 2,

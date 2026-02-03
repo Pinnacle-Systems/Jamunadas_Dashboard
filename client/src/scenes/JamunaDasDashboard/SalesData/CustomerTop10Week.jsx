@@ -2,10 +2,12 @@ import React, { useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HighchartsMore from "highcharts/highcharts-more";
-import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
+import { Card, CardHeader, CardContent, useTheme, Box } from "@mui/material";
 import { useGetTopTenCustomerWeekQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import { useState } from "react";
+import SpinLoader from '../../../utils/spinLoader'
+
 import TopTenCustomerWeekWiseTable from './TableData/TopTenCustomerWeekTable.jsx'
 HighchartsMore(Highcharts);
 
@@ -34,7 +36,7 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
     })}`;
 
   /* ---------------- API ---------------- */
-  const { data: response } = useGetTopTenCustomerWeekQuery(
+  const { data: response, isLoading, isFetching } = useGetTopTenCustomerWeekQuery(
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -215,8 +217,7 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent sx={{ position: "relative" }}>
-        {/* 🏆 Top 3 Badges */}
+      {/* <CardContent sx={{ position: "relative" }}>
         <div
           style={{
             position: "absolute",
@@ -252,7 +253,61 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
         </div>
 
         <HighchartsReact highcharts={Highcharts} options={options} />
+      </CardContent> */}
+
+      <CardContent sx={{ position: "relative", height: 460 }}>
+        {/* 🏆 Top 3 Badges */}
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 12,
+            zIndex: 11, // above loader
+            display: "flex",
+            gap: "6px",
+          }}
+        >
+          {top3Customers.map((item, index) => (
+            <div
+              key={item.customer}
+              style={{
+                padding: "4px 8px",
+                borderRadius: "14px",
+                fontSize: "11px",
+                fontWeight: 600,
+                background:
+                  index === 0 ? "#FFD700" : index === 1 ? "#C0C0C0" : "#CD7F32",
+                color: "#000",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {item.customer}
+            </div>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <HighchartsReact highcharts={Highcharts} options={options} />
+
+        {/* 🔄 Loader Overlay */}
+        {(isLoading || isFetching) && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(255,255,255,0.6)",
+              zIndex: 10,
+            }}
+          >
+            <SpinLoader />
+          </Box>
+        )}
       </CardContent>
+
       {showTable && tableParams && (
         <TopTenCustomerWeekWiseTable
           customer={tableParams.customer}

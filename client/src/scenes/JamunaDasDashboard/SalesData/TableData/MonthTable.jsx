@@ -14,7 +14,7 @@ import { useGetMonthlySalesTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 import moment from "moment";
 
-import { addInsightsRowTurnOver } from "../../../../utils/hleper";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 const MonthWiseTable = ({
     year, month, company, closeTable, finYrData, monthOptions, setSelectedYear, selectedYear
@@ -205,7 +205,7 @@ const MonthWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-            worksheet.addRow({
+            const row = worksheet.addRow({
                 month: r.month,
                 docNo: r.docId,
                 docDate: formateDate(r.docDate),
@@ -217,6 +217,9 @@ const MonthWiseTable = ({
                 rate: Number(r.rate || 0),
                 amount: Number(r.amount || 0)
             });
+            // ✅ UOM-based decimal formatting
+            row.getCell("invoiceQty").numFmt =
+                getExcelQtyFormatByUOM(r.uom);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -265,7 +268,7 @@ const MonthWiseTable = ({
             };
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
-        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
+        // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
@@ -347,12 +350,22 @@ const MonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                 
+
+                                    {/* <option value="ALL">ALL</option>
+                                    {monthOptions?.map((m) => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))} */}
+                                    {!monthOptions || monthOptions.length === 0 ? (
+                                        <option value="">Loading months...</option> // show loading
+                                    ) : (
+                                        <>
                                             <option value="ALL">ALL</option>
                                             {monthOptions?.map((m) => (
                                                 <option key={m} value={m}>{m}</option>
                                             ))}
-                                    
+                                        </>
+                                    )}
+
                                 </select>
                             </div>
 
@@ -495,7 +508,7 @@ const MonthWiseTable = ({
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
                                                 <td className="border p-1 pr-2 capitalize text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
-                                                <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pr-2 text-right">  {formatQtyByUOM(row.invoiceQty, row.uom)}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
                                                 {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}
 

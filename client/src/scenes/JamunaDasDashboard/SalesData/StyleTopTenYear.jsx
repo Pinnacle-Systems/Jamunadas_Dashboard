@@ -4,6 +4,8 @@ import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenItemYearQuery } from
     "../../../redux/service/jamunasDashboardService.js";
+import SpinLoader from '../../../utils/spinLoader'
+
 import TopTenItemYearWiseTable from './TableData/TopTenItemrYearTable.jsx'
 const COLORS = [
     "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
@@ -11,19 +13,19 @@ const COLORS = [
     "#00CED1", "#DC143C",
 ];
 
-const StyleTopTenYear = ({ yearFilter, setYearFilter , selectedCompany, finYrData ,  }) => {
+const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData, }) => {
     const theme = useTheme();
     const [showTable, setShowTable] = useState(false);
     const [tableParams, setTableParams] = useState(null);
-    const [selectedYear, setSelectedYear]  =  useState(yearFilter || "")
+    const [selectedYear, setSelectedYear] = useState(yearFilter || "")
 
 
-    console.log(yearFilter,"yearFilter",selectedYear);
+    console.log(yearFilter, "yearFilter", selectedYear);
 
     useEffect(() => {
         setSelectedYear(yearFilter)
-    },[yearFilter])
-    
+    }, [yearFilter])
+
 
 
     /* ---------- INR Formatter ---------- */
@@ -34,7 +36,7 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter , selectedCompany, finYrDat
         })}`;
 
     /* ---------- API ---------- */
-    const { data: apiResponse } = useGetTopTenItemYearQuery(
+    const { data: apiResponse, isLoading, isFetching } = useGetTopTenItemYearQuery(
         { params: { selectedYear, selectedCompany } },
         { skip: !selectedYear || !selectedCompany }
     );
@@ -165,13 +167,39 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter , selectedCompany, finYrDat
                 sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
             />
 
-            <CardContent>
+            {/* <CardContent>
                 <HighchartsReact
                     highcharts={Highcharts}
                     options={options}
                     immutable
                 />
+            </CardContent> */}
+            <CardContent sx={{ position: "relative", minHeight: 440 }}>
+                {(isLoading || isFetching) && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            zIndex: 10,
+                            backgroundColor: "rgba(255,255,255,0.6)",
+                            backdropFilter: "blur(2px)",
+                            WebkitBackdropFilter: "blur(2px)",
+                        }}
+                    >
+                        <SpinLoader />
+                    </div>
+                )}
+                <HighchartsReact
+                    highcharts={Highcharts}
+                    options={options}
+                    immutable
+                />
+
             </CardContent>
+
             {showTable && tableParams && (
                 <TopTenItemYearWiseTable
                     itemName={tableParams.itemName}

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, Box, useTheme } from "@mui/material";
+import SpinLoader from '../../../utils/spinLoader'
 
 import { useGetTopTenCustomerQuery } from
   "../../../redux/service/jamunasDashboardService.js";
@@ -22,7 +23,6 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
-  const [tempMonth, setTempMonth] = useState("")
 
 
 
@@ -38,7 +38,7 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
     })}`;
 
   /* ---------------- API ---------------- */
-  const { data: customer } = useGetTopTenCustomerQuery(
+  const { data: customer, isLoading, isFetching } = useGetTopTenCustomerQuery(
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -89,7 +89,7 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
     },
 
     yAxis: {
-      type: "logarithmic",
+      type: "linear",
       min: 1,
       title: { text: "Sales" },
     },
@@ -157,16 +157,37 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent>
-        {/* Customer Dropdown */}
-
-
+      {/* <CardContent>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
           immutable
         />
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", height: 480 }}>
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          immutable
+        />
+
+        {(isLoading || isFetching) && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 10,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+          >
+            <SpinLoader />
+          </Box>
+        )}
       </CardContent>
+
 
       {/* Table */}
       {showTable && tableParams && (

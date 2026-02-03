@@ -9,11 +9,11 @@ import {
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 
 import { useGetQuarterSalesTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 
-import { addInsightsRowTurnOver } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
@@ -206,7 +206,7 @@ const QuarterWiseTable = ({
 
         /* ================= TITLE ================= */
         worksheet.insertRow(1, ["Quarter Wise Sales Report"]);
-        worksheet.mergeCells("A1:G1");
+        worksheet.mergeCells("A1:K1");
 
         const titleCell = worksheet.getCell("A1");
         titleCell.font = { bold: true, size: 14 };
@@ -251,7 +251,7 @@ const QuarterWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-            worksheet.addRow({
+            const row = worksheet.addRow({
                 quarter: r.qaurter,
                 month: r.month,
                 docNo: r.docId,
@@ -262,9 +262,14 @@ const QuarterWiseTable = ({
                 invoiceQty: Number(r.invoiceQty || 0),
                 uom: r.uom,
                 rate: Number(r.rate || 0),
-                amount: Number(r.amount || 0)
+                amount: Number(r.amount || 0),
             });
+
+            // ✅ UOM-based decimal formatting
+            row.getCell("invoiceQty").numFmt =
+                getExcelQtyFormatByUOM(r.uom);
         });
+
 
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber <= 3) return;
@@ -314,7 +319,7 @@ const QuarterWiseTable = ({
             };
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
-        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
+        // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
@@ -399,13 +404,29 @@ const QuarterWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
 
-                                    {quarterOptions?.map((m) => (
+                                    {
+                                        !quarterOptions || quarterOptions?.length === 0 ? (
+                                            <option value="">Loading Quarter...</option> // show loading
+
+                                        ) : (
+                                            <>
+                                                <option value="ALL">ALL</option>
+
+                                                {quarterOptions?.map((m) => (
+                                                    <option key={m} value={m}>
+                                                        {m}
+                                                    </option>
+                                                ))}
+                                            </>
+                                        )
+                                    }
+
+                                    {/* {quarterOptions?.map((m) => (
                                         <option key={m} value={m}>
                                             {m}
                                         </option>
-                                    ))}
+                                    ))} */}
                                 </select>
                             </div>
                             <div className="w-40">
@@ -425,6 +446,16 @@ const QuarterWiseTable = ({
                                             {m}
                                         </option>
                                     ))}
+                                    {/* {!monthOptions || monthOptions.length === 0 ? (
+                                        <option value="">Loading months...</option> // show loading
+                                    ) : (
+                                        <>
+                                            <option value="ALL">ALL</option>
+                                            {monthOptions?.map((m) => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </>
+                                    )} */}
                                 </select>
                             </div>
                             {/* <div className="w-40">
@@ -526,7 +557,7 @@ const QuarterWiseTable = ({
                         <table className="w-full border-collapse text-[11px] table-fixed">
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
-                                    <th className="border p-1 text-center w-4">S.No</th>
+                                    <th className="border p-1 text-center w-6">S.No</th>
                                     <th className="border p-1 text-center w-8">Quarter</th>
                                     <th className="border p-1 text-center w-16">Month</th>
                                     <th className="border p-1 text-center w-24">Doc No</th>
@@ -576,7 +607,7 @@ const QuarterWiseTable = ({
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.customer}</td>
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
-                                                <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pr-2 text-right">  {formatQtyByUOM(row.invoiceQty, row.uom)}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
 
                                                 {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}

@@ -13,12 +13,12 @@ import { saveAs } from "file-saver";
 import { useGetTopTenCustomerMonthTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 
-import { addInsightsRowTurnOver } from "../../../../utils/hleper";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 import moment from "moment";
 const TopTenCustomerMonthWiseTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions, month, setSelectedYear, selectedYear ,setSelectMonths ,selectMonths
+    year, customer, company, closeTable, finYrData, customerOptions, month, setSelectedYear, selectedYear, setSelectMonths, selectMonths
 }) => {
 
     console.log(month, year, customer, company, finYrData, "receivedparams")
@@ -212,7 +212,7 @@ const TopTenCustomerMonthWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-            worksheet.addRow({
+            const row = worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -224,6 +224,8 @@ const TopTenCustomerMonthWiseTable = ({
                 rate: Number(r.rate || 0),
                 amount: Number(r.amount || 0)
             });
+            row.getCell("invoiceQty").numFmt =
+                getExcelQtyFormatByUOM(r.uom);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -272,7 +274,7 @@ const TopTenCustomerMonthWiseTable = ({
             };
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
-        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
+        // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
@@ -519,7 +521,7 @@ const TopTenCustomerMonthWiseTable = ({
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
 
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
-                                                <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pr-2 text-right">  {formatQtyByUOM(row.invoiceQty, row.uom)}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
 
                                                 {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}

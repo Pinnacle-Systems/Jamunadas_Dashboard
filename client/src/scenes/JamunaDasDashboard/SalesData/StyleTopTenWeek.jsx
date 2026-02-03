@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenItemWeekQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import TopTenItemWeekTable from './TableData/TopTenItemWeekTable.jsx'
+import SpinLoader from '../../../utils/spinLoader'
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
@@ -23,7 +24,7 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
     })}`;
 
   /* ---------- API ---------- */
-  const { data: response } = useGetTopTenItemWeekQuery(
+  const { data: response, isFetching, isLoading } = useGetTopTenItemWeekQuery(
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -141,7 +142,7 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
           x: index,
           y: item.y,
           itemName: item.itemName,
-          company : item?.company
+          company: item?.company
         })),
         marker: {
           fillColor: "#000",
@@ -172,8 +173,7 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent sx={{ position: "relative" }}>
-        {/* 🏆 Top 3 Badges */}
+      {/* <CardContent sx={{ position: "relative" }}>
         <div
           style={{
             position: "absolute",
@@ -208,9 +208,71 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
           ))}
         </div>
 
-        {/* 📈 Chart */}
         <HighchartsReact highcharts={Highcharts} options={options} />
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", minHeight: 420 }}>
+        {(isLoading || isFetching) && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 20,
+              backgroundColor: "rgba(255,255,255,0.6)",
+              backdropFilter: "blur(2px)",
+              WebkitBackdropFilter: "blur(2px)",
+            }}
+          >
+            <SpinLoader />
+          </div>
+        )}
+
+        {/* 🏆 Top 3 Badges */}
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 12,
+            zIndex: 10, // stays below loader
+            display: "flex",
+            gap: "6px",
+          }}
+        >
+          {top3Items.map((item, index) => (
+            <div
+              key={item.itemName}
+              style={{
+                padding: "4px 8px",
+                borderRadius: "14px",
+                fontSize: "11px",
+                fontWeight: 600,
+                background:
+                  index === 0
+                    ? "#FFD700"
+                    : index === 1
+                      ? "#C0C0C0"
+                      : "#CD7F32",
+                color: "#000",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {item.itemName}
+            </div>
+          ))}
+        </div>
+
+        {/* 📈 Chart */}
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          immutable
+        />
       </CardContent>
+
+
       {showTable && tableParams && (
         <TopTenItemWeekTable
           itemName={tableParams.itemName}

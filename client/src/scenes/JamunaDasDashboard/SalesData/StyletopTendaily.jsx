@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenItemDailyQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import TopTenItemTodayTable from "./TableData/TopTenItemTodayTable.jsx";
+import SpinLoader from '../../../utils/spinLoader'
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
@@ -24,7 +25,7 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
     })}`;
 
   /* ---------- API ---------- */
-  const { data: response } = useGetTopTenItemDailyQuery(
+  const { data: response, isFetching, isLoading } = useGetTopTenItemDailyQuery(
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -116,12 +117,38 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent>
+      {/* <CardContent>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
         />
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", minHeight: 420 }}>
+        {(isLoading || isFetching) && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 20,
+              backgroundColor: "rgba(255,255,255,0.6)",
+              backdropFilter: "blur(2px)",
+              WebkitBackdropFilter: "blur(2px)",
+            }}
+          >
+            <SpinLoader />
+          </div>
+        )}
+
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          immutable
+        />
       </CardContent>
+
       {showTable && tableParams && (
         <TopTenItemTodayTable
           itemName={tableParams.itemName}

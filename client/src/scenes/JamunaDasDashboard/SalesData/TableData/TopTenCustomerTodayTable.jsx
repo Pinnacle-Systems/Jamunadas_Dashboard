@@ -13,7 +13,7 @@ import { saveAs } from "file-saver";
 import { useGetTopTenCustomerDailyTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 
-import { addInsightsRowTurnOver } from "../../../../utils/hleper";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
@@ -36,11 +36,11 @@ const TopTenCustomerTodayTable = ({
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading , isFetching } =
+    const { data: response, isLoading, isFetching } =
         useGetTopTenCustomerDailyTableQuery(
             {
                 params: {
-                    companyName: localCompany ,
+                    companyName: localCompany,
                     finYear: localYear,
                     customer: selectedCustomer
                 },
@@ -202,7 +202,7 @@ const TopTenCustomerTodayTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-            worksheet.addRow({
+          const row =   worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -214,6 +214,9 @@ const TopTenCustomerTodayTable = ({
                 rate: Number(r.rate || 0),
                 amount: Number(r.amount || 0)
             });
+              // ✅ UOM-based decimal formatting
+            row.getCell("invoiceQty").numFmt =
+                getExcelQtyFormatByUOM(r.uom);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -262,7 +265,7 @@ const TopTenCustomerTodayTable = ({
             };
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
-        worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
+        // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
 
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
@@ -491,7 +494,7 @@ const TopTenCustomerTodayTable = ({
                                                 <td className="border p-1 pl-2 text-left ">{row.salesType}</td>
 
                                                 <td className="border p-1 pr-2 text-left">{row.itemName}</td>
-                                                <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
+                                                <td className="border p-1 pr-2 text-right">  {formatQtyByUOM(row.invoiceQty, row.uom)}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
 
                                                 {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}

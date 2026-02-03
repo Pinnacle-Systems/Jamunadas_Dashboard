@@ -5,6 +5,7 @@ import Highcharts from "highcharts";
 import YearlyTable from "../SalesData/TableData/Yeartable.jsx";
 
 import { useGetYearlySalesQuery } from "../../../redux/service/jamunasDashboardService.js";
+import SpinLoader from '../../../utils/spinLoader'
 
 const YearlySales = ({ selectedCompany, year, finYrData }) => {
     const [xdata, setXdata] = useState([]);
@@ -13,7 +14,7 @@ const YearlySales = ({ selectedCompany, year, finYrData }) => {
     const [showTable, setShowTable] = useState(false);
     const [tableParams, setTableParams] = useState(null);
 
-    const { data: response, isLoading } = useGetYearlySalesQuery({
+    const { data: response, isLoading ,isFetching} = useGetYearlySalesQuery({
         params: { selectedCompany, year },
     });
 
@@ -113,13 +114,33 @@ const YearlySales = ({ selectedCompany, year, finYrData }) => {
                 title={`Year ${year} Sales`} titleTypographyProps={{ sx: { fontSize: ".9rem", fontWeight: 600 } }}
                 sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
             />
-            <CardContent>
+            {/* <CardContent>
                 {isLoading ? (
                     <Box sx={{ textAlign: "center", py: 5 }}>Loading...</Box>
                 ) : (
                     <HighchartsReact highcharts={Highcharts} options={options} immutable />
                 )}
+            </CardContent> */}
+            <CardContent sx={{ position: "relative", height: 420 }}>
+                <HighchartsReact highcharts={Highcharts} options={options} immutable />
+
+                {(isLoading || isFetching) && (
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            zIndex: 10,
+                            backgroundColor: "rgba(255,255,255,0.6)",
+                        }}
+                    >
+                        <SpinLoader />
+                    </Box>
+                )}
             </CardContent>
+
 
             {showTable && (
                 <YearlyTable

@@ -12,6 +12,7 @@ import {
 import { useGetQuarterSalesQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import QuarterWiseTable from "../SalesData/TableData/QuarterTable.jsx";
+import SpinLoader from '../../../utils/spinLoader'
 
 // ---------------- MONTH MAP ----------------
 const MONTH_MAP = {
@@ -96,7 +97,7 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
     if (!Array.isArray(chartData.data)) return [];
 
     return [...new Set(chartData.data.map(item => item.quarter))];
-  }, [chartData,isFetching,isLoading]);
+  }, [chartData, isFetching, isLoading]);
 
   const monthOptions = useMemo(() => {
     if (isFetching || isLoading) return [];   // 🔥 key line
@@ -104,7 +105,7 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
     if (!tableParams?.quarter || !Array.isArray(chartData.data)) return [];
 
     return chartData.data?.filter(item => item.quarter === tableParams.quarter)?.map(item => item.month)?.filter((v, i, arr) => arr.indexOf(v) === i); // unique
-  }, [chartData, tableParams,isFetching,isLoading]);
+  }, [chartData, tableParams, isFetching, isLoading]);
 
 
 
@@ -256,7 +257,7 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent>
+      {/* <CardContent>
         {isLoading ? (
           <div style={{ textAlign: "center", padding: "40px" }}>
             Loading...
@@ -264,7 +265,27 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
         ) : (
           <HighchartsReact highcharts={Highcharts} options={options} />
         )}
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", height: 420 }}>
+        <HighchartsReact highcharts={Highcharts} options={options} immutable />
+
+        {(isLoading || isFetching) && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 10,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+          >
+            <SpinLoader />
+          </div>
+        )}
       </CardContent>
+
       {showTable && tableParams && (
         <QuarterWiseTable
           year={tableParams.year}

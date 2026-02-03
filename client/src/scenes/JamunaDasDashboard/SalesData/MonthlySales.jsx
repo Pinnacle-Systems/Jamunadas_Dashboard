@@ -11,6 +11,7 @@ import {
 
 import { useGetMonthlySalesQuery } from
   "../../../redux/service/jamunasDashboardService.js";
+import SpinLoader from '../../../utils/spinLoader'
 
 import MonthWiseTable from "../SalesData/TableData/MonthTable.jsx";
 
@@ -27,7 +28,7 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
 
-
+  const [childMonth,setChildMonth] = useState(selectedMonth)
   /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -58,15 +59,13 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
 
     if (!Array.isArray(chartData)) return [];
     return chartData.map(item => item.month);
-  }, [chartData,isFetching,isLoading]);
+  }, [chartData, isFetching, isLoading]);
 
-  console.log(monthOptions, "monthOptions");
 
   /* ---------------- Reset on Props Change ---------------- */
-  // useEffect(() => {
-  //   setSelectedMonth(null);
-  //   setShowTable(false);
-  // }, [selectedYear, selectedCompany]);
+  useEffect(() => {
+    setSelectedMonth(null);
+  }, [selectedYear, selectedCompany]);
 
   /* ---------------- Parent Chart Data ---------------- */
   const categories = useMemo(
@@ -253,11 +252,10 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
       />
 
       <CardContent>
-        {isLoading ? (
+        {/* {isLoading ? (
           <Box sx={{ textAlign: "center", py: 5 }}>Loading...</Box>
         ) : (
           <Box sx={{ display: "flex", width: "100%" }}>
-            {/* Parent Chart */}
             <Box sx={{ width: "70%" }}>
               <HighchartsReact
                 highcharts={Highcharts}
@@ -266,7 +264,6 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
               />
             </Box>
 
-            {/* Child Chart */}
             <Box sx={{ width: "30%", ml: 1 }}>
               <Card sx={{ height: "100%" }}>
                 <Box
@@ -307,10 +304,94 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
               </Card>
             </Box>
           </Box>
-        )}
+        )} */}
+        <Box sx={{ display: "flex", width: "100%" }}>
+          {/* Parent Chart */}
+          <Box sx={{ width: "70%", position: "relative", height: 430 }}>
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={parentOptions}
+              immutable
+            />
+
+            {(isLoading || isFetching) && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 10,
+                  backgroundColor: "rgba(255,255,255,0.6)",
+                }}
+              >
+                <SpinLoader />
+              </Box>
+            )}
+          </Box>
+
+          {/* Child Chart */}
+          <Box sx={{ width: "30%", ml: 1 }}>
+            <Card sx={{ height: "100%" }}>
+              <Box
+                sx={{
+                  px: 1,
+                  py: 0.5,
+                  fontWeight: 600,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                {selectedMonth
+                  ? `${selectedMonth} Sales Details`
+                  : "Month Details"}
+              </Box>
+
+              <CardContent sx={{ position: "relative", height: 260, p: 0 }}>
+                {selectedMonth  ? (
+                  <>
+                    <HighchartsReact
+                      highcharts={Highcharts}
+                      options={childOptions}
+                      immutable
+                    />
+                    {(isLoading || isFetching) && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          zIndex: 10,
+                          backgroundColor: "rgba(255,255,255,0.6)",
+                        }}
+                      >
+                        <SpinLoader />
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Box
+                    sx={{
+                      height: 260,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "text.secondary",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    Click a month to view details
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
+
       </CardContent>
 
-      {/* Table */}
       {showTable && tableParams && (
         <MonthWiseTable
           year={tableParams.year}
@@ -325,7 +406,6 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
             setShowTable(false);
             setTableParams(null);
             setSelectedYear(yearFilter)
-
           }}
         />
       )}

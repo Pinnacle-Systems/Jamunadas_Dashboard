@@ -5,6 +5,8 @@ import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
 import { useGetTopTenCustomerDailyQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import TopTenCustomerTodayTable from './TableData/TopTenCustomerTodayTable.jsx'
+import SpinLoader from '../../../utils/spinLoader'
+
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042",
   "#B435E3", "#E35B5B", "#FFA500", "#800080",
@@ -26,7 +28,7 @@ const CustomerTop10Daily = ({ selectedYear, selectedCompany }) => {
     })}`;
 
   /* ---------------- API ---------------- */
-  const { data: response } = useGetTopTenCustomerDailyQuery(
+  const { data: response, isLoading, isFetching } = useGetTopTenCustomerDailyQuery(
     { params: { selectedYear, selectedCompany } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -119,12 +121,34 @@ const CustomerTop10Daily = ({ selectedYear, selectedCompany }) => {
         sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
       />
 
-      <CardContent>
+      {/* <CardContent>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
         />
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", minHeight: 420 }}>
+        {(isLoading || isFetching) ? (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 10,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+          >
+            <SpinLoader />
+          </div>) : (
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={options}
+          />
+        )}
       </CardContent>
+
       {showTable && tableParams && (
         <TopTenCustomerTodayTable
           customer={tableParams.customer}

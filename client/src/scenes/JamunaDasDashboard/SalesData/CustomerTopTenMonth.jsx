@@ -6,6 +6,8 @@ import { Card, CardHeader, CardContent, useTheme, Box } from "@mui/material";
 import { useGetTopTenCustomerMonthQuery } from
   "../../../redux/service/jamunasDashboardService.js";
 import FinYear from "../../../components/FinYear.js";
+import SpinLoader from '../../../utils/spinLoader'
+
 import TopTenCustomerMonthWiseTable from './TableData/TopTenCustomerMonthTable.jsx'
 Highcharts3D(Highcharts);
 
@@ -16,24 +18,19 @@ const COLORS = [
 ];
 
 
-const CustomerTopTenMonth = ({  yearFilter, selectedCompany, finYrData }) => {
+const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
-  const [tempMonth,setTempMonth] = useState("")
+  const [tempMonth, setTempMonth] = useState("")
 
 
 
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
-
-
-
-  console.log(selectMonths, "selectMonths");
-
 
 
 
@@ -44,7 +41,7 @@ const CustomerTopTenMonth = ({  yearFilter, selectedCompany, finYrData }) => {
     })}`;
 
   /* ---------------- API ---------------- */
-  const { data: response } = useGetTopTenCustomerMonthQuery(
+  const { data: response, isFetching, isLoading } = useGetTopTenCustomerMonthQuery(
     { params: { selectedYear, selectedCompany, selectMonths } },
     { skip: !selectedYear || !selectedCompany }
   );
@@ -160,7 +157,7 @@ const CustomerTopTenMonth = ({  yearFilter, selectedCompany, finYrData }) => {
               setSelectmonths={(value) => {
                 setSelectMonths(value)
                 setTempMonth(value)
-              } }
+              }}
               autoBorder={true}
             />
           </Box>
@@ -177,13 +174,38 @@ const CustomerTopTenMonth = ({  yearFilter, selectedCompany, finYrData }) => {
         }}
       />
 
-      <CardContent>
+      {/* <CardContent>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
           immutable
         />
+      </CardContent> */}
+      <CardContent sx={{ position: "relative", height: 480}}>
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          immutable
+        />
+
+        {(isLoading || isFetching) && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 10,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+          >
+            <SpinLoader />
+          </Box>
+        )}
       </CardContent>
+
+
       {showTable && tableParams && (
         <TopTenCustomerMonthWiseTable
           year={tableParams.year}
