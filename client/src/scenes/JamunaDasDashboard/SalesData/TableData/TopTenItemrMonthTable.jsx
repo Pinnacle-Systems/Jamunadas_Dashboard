@@ -295,7 +295,7 @@ const TopTenItemMonthWiseTable = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
-            <div className="bg-white w-[1350px] h-[630px] p-4 rounded-xl relative">
+            <div className="bg-white w-[1370px] h-[630px] p-4 rounded-xl relative">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
@@ -373,7 +373,7 @@ const TopTenItemMonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="">Select Item </option>
+                                    <option value="ALL">ALL</option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>
@@ -471,8 +471,8 @@ const TopTenItemMonthWiseTable = ({
                 </div>
                 {/* TABLE */}
                 <div className="grid  gap-4">
-                    <div className="overflow-x-auto h-[470px] " style={{ border: "1px solid gray", borderRadius: "16px" }}>
-                        <table className="w-full border-collapse border border-gray-300 text-[11px] table-fixed">
+                    <div className="overflow-x-auto h-[470px] border border-gray-300" style={{ border: "1px solid gray", borderRadius: "16px" }}>
+                        <table className="w-full border-collapse  text-[11px] table-fixed">
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
                                     <th className="border p-1 text-center w-4">S.No</th>
@@ -488,7 +488,7 @@ const TopTenItemMonthWiseTable = ({
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
                                     <th className="border p-1 text-center w-8">UOM</th>
 
-                                    <th className="border p-1 text-center w-8">Rate</th>
+                                    <th className="border p-1 text-center w-[38px]">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
                                 </tr>
@@ -504,7 +504,7 @@ const TopTenItemMonthWiseTable = ({
                                     </tr>
                                 ) : currentRecords.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-6 text-gray-500">
+                                        <td colSpan={11} className="text-center py-6 text-gray-500">
                                             No data found
                                         </td>
                                     </tr>
@@ -531,8 +531,14 @@ const TopTenItemMonthWiseTable = ({
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
 
-                                                <td className="border p-1 pr-2 text-right">{row.rate}</td>
+                                                {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}
 
+                                                <td className="border p-1 pr-2 text-right ">
+                                                    {new Intl.NumberFormat("en-IN", {
+                                                        style: "currency",
+                                                        currency: "INR",
+                                                    }).format(row.rate)}
+                                                </td>
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">
                                                     {new Intl.NumberFormat("en-IN", {
                                                         style: "currency",

@@ -18,7 +18,7 @@ import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
-    year, quarter, company, closeTable, finYrData, quarterOptions, monthOptions, month,
+    year, quarter, company, closeTable, finYrData, quarterOptions, month, setSelectedYear, selectedYear
 }) => {
 
     console.log(year, quarter, company, closeTable, finYrData, "receivedparams")
@@ -30,23 +30,22 @@ const QuarterWiseTable = ({
     const [selectedQuarter, setSelectedQuarter] = useState(quarter || "ALL");
     const [selectedMonth, setSelectedMonth] = useState(month || "ALL")
     const [localCompany, setLocalCompany] = useState(company || "ALL");
-    const [localYear, setLocalYear] = useState(year);
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading, isFetching } =
         useGetQuarterSalesTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
-                    finYear: localYear,
+                    finYear: selectedYear,
                     quarter: selectedQuarter
                 },
             },
-            { skip: !localYear }
+            { skip: !selectedYear }
         );
 
     const rawData = useMemo(() => {
@@ -54,6 +53,43 @@ const QuarterWiseTable = ({
     }, [response?.data]);
 
     console.log(rawData, "rawData");
+
+    // const monthOptions = useMemo(() => {
+    //     if (!Array.isArray(rawData)) return [];
+
+    //     if (!selectedQuarter || selectedQuarter === "ALL") return [];
+
+    //     return [
+    //         ...new Set(
+    //             rawData
+    //                 .filter(row => row.qaurter === selectedQuarter)
+    //                 .map(row => row.month)
+    //         ),
+    //     ];
+    // }, [rawData, selectedQuarter]);
+    const monthOptions = useMemo(() => {
+        if (!Array.isArray(rawData)) return [];
+
+        let months =
+            selectedQuarter && selectedQuarter !== "ALL"
+                ? rawData
+                    .filter(row => row.qaurter === selectedQuarter)
+                    .map(row => row.month)
+                : [];
+
+        months = [...new Set(months)];
+
+        // 🔥 ensure selectedMonth exists during loading
+        if (
+            selectedMonth &&
+            selectedMonth !== "ALL" &&
+            !months.includes(selectedMonth)
+        ) {
+            months = [selectedMonth, ...months];
+        }
+
+        return months;
+    }, [rawData, selectedQuarter, selectedMonth]);
 
 
 
@@ -108,6 +144,8 @@ const QuarterWiseTable = ({
 
     useEffect(() => {
         setSelectedQuarter(quarter || "ALL");
+        setSelectedMonth("ALL");   // 🔥 ADD THIS
+
         setCurrentPage(1);
     }, [quarter]);
 
@@ -180,7 +218,7 @@ const QuarterWiseTable = ({
             worksheet,
             startRow: 2,
             totalColumns: 3,
-            selectedYear: localYear,
+            selectedYear: selectedYear,
             localCompany,
             dynamicField: "Quarter",
             dynamicValue: selectedQuarter,
@@ -296,7 +334,7 @@ const QuarterWiseTable = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
-            <div className="bg-white w-[1350px] h-[630px] p-4 rounded-xl relative">
+            <div className="bg-white w-[1370px] h-[630px] p-4 rounded-xl relative">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-center">
@@ -310,11 +348,16 @@ const QuarterWiseTable = ({
                             <div className="w-24">
 
                                 <select
-                                    value={localYear || ""}
+                                    value={selectedYear || ""}
                                     onChange={(e) => {
-                                        setLocalYear(e.target.value);
+                                        setSelectedYear(e.target.value);
                                         setCurrentPage(1);
-                                    }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
+
+                                        // reset filters
+                                        setSelectedMonth("ALL");
+                                        setSelectedQuarter("ALL");
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border-2   rounded-md 
       border-blue-600 transition-all duration-200"
                                 >
                                     <option value="" disabled>
@@ -349,6 +392,8 @@ const QuarterWiseTable = ({
                                     value={selectedQuarter || "ALL"}
                                     onChange={(e) => {
                                         setSelectedQuarter(e.target.value);
+                                        setSelectedMonth("ALL");   // 🔥 RESET MONTH
+
                                         setCurrentPage(1);
                                     }}
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
@@ -477,8 +522,8 @@ const QuarterWiseTable = ({
                 </div>
                 {/* TABLE */}
                 <div className="grid  gap-4">
-                    <div className="overflow-x-auto h-[470px] " style={{ border: "1px solid gray", borderRadius: "16px" }}>
-                        <table className="w-full border-collapse border border-gray-300 text-[11px] table-fixed">
+                    <div className="overflow-x-auto h-[470px]  border border-gray-300" style={{ border: "1px solid gray", borderRadius: "16px" }}>
+                        <table className="w-full border-collapse text-[11px] table-fixed">
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
                                 <tr>
                                     <th className="border p-1 text-center w-4">S.No</th>
@@ -492,13 +537,13 @@ const QuarterWiseTable = ({
                                     <th className="border p-1 text-center w-12">Invoice Qty</th>
                                     <th className="border p-1 text-center w-8">UOM</th>
 
-                                    <th className="border p-1 text-center w-8">Rate</th>
+                                    <th className="border p-1 text-center w-[38px]">Rate</th>
                                     <th className="border p-1 text-center w-12">Amount</th>
 
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">
@@ -508,7 +553,7 @@ const QuarterWiseTable = ({
                                     </tr>
                                 ) : currentRecords.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-6 text-gray-500">
+                                        <td colSpan={12} className="text-center py-6 text-gray-500 border-b-0">
                                             No data found
                                         </td>
                                     </tr>
@@ -534,8 +579,14 @@ const QuarterWiseTable = ({
                                                 <td className="border p-1 pr-2 text-right">{row.invoiceQty}</td>
                                                 <td className="border p-1 pl-2 text-left">{row.uom}</td>
 
-                                                <td className="border p-1 pr-2 text-right">{row.rate}</td>
+                                                {/* <td className="border p-1 pr-2 text-right">{row.rate}</td> */}
 
+                                                <td className="border p-1 pr-2 text-right  ">
+                                                    {new Intl.NumberFormat("en-IN", {
+                                                        style: "currency",
+                                                        currency: "INR",
+                                                    }).format(row.rate)}
+                                                </td>
                                                 <td className="border p-1 pr-2 text-right text-sky-700 ">
                                                     {new Intl.NumberFormat("en-IN", {
                                                         style: "currency",

@@ -115,7 +115,7 @@ const SalesDetail = ({ selectedYear, selectedCompany }) => {
       <Grid container >
 
         <Grid item xs={12} md={8}>
-          <QuarterSales finYrData={finYrData} selectedYear={yearFilter} selectedCompany={company} />
+          <QuarterSales finYrData={finYrData} yearFilter={yearFilter} setYearFilter={setYearFilter} selectedCompany={company} />
         </Grid>
         <Grid item xs={12} md={4}>
           <YearlySales finYrData={finYrData} year={yearFilter} selectedCompany={company} />

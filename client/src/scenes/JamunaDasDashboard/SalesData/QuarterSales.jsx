@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
@@ -28,20 +28,24 @@ const QUARTER_COLORS = {
   Q4: "#0088FE",
 };
 
-const QuarterSales = ({ selectedYear, selectedCompany, finYrData
+const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
 }) => {
   const theme = useTheme();
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(yearFilter || "")
 
 
+  useEffect(() => {
+    setSelectedYear(yearFilter)
+  }, [yearFilter])
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-  const { data: response, isLoading } =
+  const { data: response, isLoading, isFetching } =
     useGetQuarterSalesQuery({
       params: { selectedYear, selectedCompany },
     });
@@ -87,16 +91,20 @@ const QuarterSales = ({ selectedYear, selectedCompany, finYrData
 
   /* ---------------- Quarter Dropdown Options ---------------- */
   const quarterOptions = useMemo(() => {
+    if (isFetching || isLoading) return [];   // 🔥 key line
+
     if (!Array.isArray(chartData.data)) return [];
 
     return [...new Set(chartData.data.map(item => item.quarter))];
-  }, [chartData]);
+  }, [chartData,isFetching,isLoading]);
 
   const monthOptions = useMemo(() => {
+    if (isFetching || isLoading) return [];   // 🔥 key line
+
     if (!tableParams?.quarter || !Array.isArray(chartData.data)) return [];
 
     return chartData.data?.filter(item => item.quarter === tableParams.quarter)?.map(item => item.month)?.filter((v, i, arr) => arr.indexOf(v) === i); // unique
-  }, [chartData, tableParams]);
+  }, [chartData, tableParams,isFetching,isLoading]);
 
 
 
@@ -269,7 +277,11 @@ const QuarterSales = ({ selectedYear, selectedCompany, finYrData
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedYear(yearFilter)
+
           }}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
         />
       )}
 

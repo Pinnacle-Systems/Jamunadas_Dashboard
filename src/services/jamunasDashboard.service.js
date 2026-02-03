@@ -30,7 +30,9 @@ export async function getTotalSales(req, res) {
 
     try {
         const result = await pool.query(`
-       select d.finyr as salesyear,c.compcode AS company,sum(b.delqty * a.netamt) as totalsales from gtsalesinv a
+       select d.finyr as salesyear,c.compcode AS company,SUM(
+        ROUND((a.netamt * ((b.amount / a.gramt) * 100)) / 100, 2)
+    ) AS totalsales from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast c on c.gtcompmastid =a.compcode 
 join gtfinancialyear d on d.gtfinancialyearid =a.finyear 

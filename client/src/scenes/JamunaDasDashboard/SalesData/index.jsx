@@ -169,7 +169,7 @@ const SalesData = () => {
         titleTypographyProps={{ sx: { fontSize: "1rem", fontWeight: 600 } }}
       />
 
-      <CardContent>
+      {/* <CardContent>
         {salesData.length > 0 && (
           <ReactApexChart
             options={apexOptions}
@@ -178,33 +178,58 @@ const SalesData = () => {
             height={300}
           />
         )}
-        {/* <Box
+        
+
+        <Box
           sx={{
-            height: 300,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            mt: 1,
+            p: 1,
+            bgcolor: "background.default",
+            borderRadius: 3,
+            textAlign: "center",
+            border: `1px solid ${theme.palette.divider}`,
           }}
         >
-          {isLoading ? (
-            <SpinLoader />
-          ) : isError ? (
-            <Typography color="error">
-              Failed to load chart
-            </Typography>
-          ) : salesData.length > 0 ? (
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Overall Sales : {formatINR(sumTotal)}
+          </Typography>
+        </Box>
+      </CardContent> */}
+
+      <CardContent>
+        <Box
+          sx={{
+            position: "relative",
+            height: 300,
+            width: "100%",
+          }}
+        >
+          {isLoading && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "background.paper",
+                zIndex: 2,
+                borderRadius: 2,
+              }}
+            >
+              <SpinLoader />
+            </Box>
+          )}
+
+          {salesData.length > 0 && (
             <ReactApexChart
               options={apexOptions}
               series={apexSeries}
               type="bar"
               height={300}
             />
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No data available
-            </Typography>
           )}
-        </Box> */}
+        </Box>
 
         <Box
           sx={{
@@ -221,6 +246,7 @@ const SalesData = () => {
           </Typography>
         </Box>
       </CardContent>
+
     </Card>
   );
 };
