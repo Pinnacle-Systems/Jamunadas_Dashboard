@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HighchartsMore from "highcharts/highcharts-more";
@@ -25,8 +25,9 @@ const COLORS = [
   "#DC143C",
 ];
 
-const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
+const CustomerTop10Week = ({ selectedYear, selectedCompany, filterType, setFilterType }) => {
   const theme = useTheme();
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
   /* ---------------- Utils ---------------- */
   const formatINR = (value) =>
@@ -34,10 +35,12 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   /* ---------------- API ---------------- */
   const { data: response, isLoading, isFetching } = useGetTopTenCustomerWeekQuery(
-    { params: { selectedYear, selectedCompany } },
+    { params: { selectedYear, selectedCompany, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany }
   );
   const [showTable, setShowTable] = useState(false);
@@ -276,8 +279,8 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
                 fontSize: "11px",
                 fontWeight: 600,
                 background:
-                  index === 0 ? "#FFD700" : index === 1 ? "#C0C0C0" : "#CD7F32",
-                color: "#000",
+                  index === 0 ? "#0088FE" : index === 1 ? "#00C49F" : "#FFBB28",
+                color: "white",
                 boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
                 whiteSpace: "nowrap",
               }}
@@ -316,7 +319,11 @@ const CustomerTop10Week = ({ selectedYear, selectedCompany }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedFilterType(filterType)
+
           }}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
 

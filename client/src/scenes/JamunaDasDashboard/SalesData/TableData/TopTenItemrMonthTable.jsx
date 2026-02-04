@@ -13,13 +13,13 @@ import { saveAs } from "file-saver";
 import { useGetTopTenItemMonthTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 
-import { addInsightsRowTurnOver , formatQtyByUOM, getExcelQtyFormatByUOM} from "../../../../utils/hleper";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 import moment from "moment";
 const TopTenItemMonthWiseTable = ({
     year, item, company, closeTable, finYrData, itemOptions, month, selectedYear, setSelectedYear,
-    selectMonths, setSelectMonths
+    selectMonths, setSelectMonths, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(selectMonths, year, item, company, finYrData, "receivedparams")
@@ -37,7 +37,9 @@ const TopTenItemMonthWiseTable = ({
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
-
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
     // ✅ API CALL INSIDE TABLE
     const { data: response, isLoading, isFetching } =
         useGetTopTenItemMonthTableQuery(
@@ -46,7 +48,7 @@ const TopTenItemMonthWiseTable = ({
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: selectedYear,
                     item: itemName,
-                    month: selectMonths
+                    month: selectMonths, type: selectedfilterType
                 },
             },
             { skip: !selectedYear }
@@ -146,7 +148,10 @@ const TopTenItemMonthWiseTable = ({
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Top Ten Item Month Wise Sales Report");
         worksheet.columns = [
@@ -185,7 +190,9 @@ const TopTenItemMonthWiseTable = ({
             dynamicValue: selectMonths,
             secondDynamicField: "Item",
 
-            seconddynamicValue: itemName
+            seconddynamicValue: itemName,
+            thirdDynamicField: "Business Model",
+            thirdDynamicValue: selectedfilterType
 
         });
 
@@ -213,7 +220,7 @@ const TopTenItemMonthWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-         const row =   worksheet.addRow({
+            const row = worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -226,7 +233,7 @@ const TopTenItemMonthWiseTable = ({
                 amount: Number(r.amount || 0)
             });
             row.getCell("invoiceQty").numFmt =
-                            getExcelQtyFormatByUOM(r.uom);
+                getExcelQtyFormatByUOM(r.uom);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -256,8 +263,8 @@ const TopTenItemMonthWiseTable = ({
             customer: "",
 
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -272,13 +279,13 @@ const TopTenItemMonthWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
         // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
-//aas
+        //aas
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
 
@@ -307,7 +314,41 @@ const TopTenItemMonthWiseTable = ({
 
                     <div className="flex gap-2 items-center">
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             <div className="w-24">
 
                                 <select
@@ -375,7 +416,7 @@ const TopTenItemMonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option>Select Item</option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>

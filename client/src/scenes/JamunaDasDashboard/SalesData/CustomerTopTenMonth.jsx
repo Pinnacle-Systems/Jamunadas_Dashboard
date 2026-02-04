@@ -18,20 +18,23 @@ const COLORS = [
 ];
 
 
-const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData }) => {
+const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData, filterType, setFilterType }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
   const [tempMonth, setTempMonth] = useState("")
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
 
 
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
-
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
 
 
   const formatINR = (value) =>
@@ -42,7 +45,7 @@ const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData }) => {
 
   /* ---------------- API ---------------- */
   const { data: response, isFetching, isLoading } = useGetTopTenCustomerMonthQuery(
-    { params: { selectedYear, selectedCompany, selectMonths } },
+    { params: { selectedYear, selectedCompany, selectMonths, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany }
   );
 
@@ -181,7 +184,7 @@ const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData }) => {
           immutable
         />
       </CardContent> */}
-      <CardContent sx={{ position: "relative", height: 480}}>
+      <CardContent sx={{ position: "relative", height: 480 }}>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
@@ -219,11 +222,15 @@ const CustomerTopTenMonth = ({ yearFilter, selectedCompany, finYrData }) => {
             setTableParams(null);
             setSelectedYear(yearFilter)
             setSelectMonths(tempMonth)
+            setSelectedFilterType(filterType)
+
           }}
           setSelectedYear={setSelectedYear}
           selectedYear={selectedYear}
           selectMonths={selectMonths}
           setSelectMonths={setSelectMonths}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
     </Card>

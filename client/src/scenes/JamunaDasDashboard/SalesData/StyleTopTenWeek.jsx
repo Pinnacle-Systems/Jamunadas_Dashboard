@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
@@ -12,20 +12,23 @@ const COLORS = [
   "#B435E3", "#E35B5B", "#FFA500", "#800080",
   "#00CED1", "#DC143C",
 ];
-const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
+const StyleTop10Week = ({ selectedYear, selectedCompany, filterType, setFilterType }) => {
   const theme = useTheme();
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   /* ---------- API ---------- */
   const { data: response, isFetching, isLoading } = useGetTopTenItemWeekQuery(
-    { params: { selectedYear, selectedCompany } },
+    { params: { selectedYear, selectedCompany, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany }
   );
 
@@ -235,7 +238,7 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
             position: "absolute",
             top: 8,
             right: 12,
-            zIndex: 10, // stays below loader
+            zIndex: 10, 
             display: "flex",
             gap: "6px",
           }}
@@ -250,11 +253,11 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
                 fontWeight: 600,
                 background:
                   index === 0
-                    ? "#FFD700"
+                    ? "#0088FE"
                     : index === 1
-                      ? "#C0C0C0"
+                      ? "#00C49F"
                       : "#CD7F32",
-                color: "#000",
+                color: "white",
                 boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
                 whiteSpace: "nowrap",
               }}
@@ -280,8 +283,12 @@ const StyleTop10Week = ({ selectedYear, selectedCompany }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedFilterType(filterType)
+
           }}
           itemOptions={itemOptions}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
 

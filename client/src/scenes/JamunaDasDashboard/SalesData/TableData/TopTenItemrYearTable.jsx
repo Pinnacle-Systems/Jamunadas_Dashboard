@@ -13,12 +13,12 @@ import { saveAs } from "file-saver";
 import { useGetTopTenItemYearTableQuery } from
     "../../../../redux/service/jamunasDashboardService";
 
-import { addInsightsRowTurnOver , formatQtyByUOM, getExcelQtyFormatByUOM} from "../../../../utils/hleper";
+import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
-const TopTenItemYearWiseTable = ({ 
-    year, itemName, company, closeTable, finYrData, itemOptions ,setSelectedYear ,selectedYear
+const TopTenItemYearWiseTable = ({
+    year, itemName, company, closeTable, finYrData, itemOptions, setSelectedYear, selectedYear, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(year, itemName, company, selectedYear, finYrData, "receivedparams")
@@ -30,19 +30,21 @@ const TopTenItemYearWiseTable = ({
     const [selectedItem, setSelectedItem] = useState(itemName || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
     // const [localYear, setLocalYear] = useState(year);
-
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading ,isFetching } =
+    const { data: response, isLoading, isFetching } =
         useGetTopTenItemYearTableQuery(
             {
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: selectedYear,
-                    item: selectedItem
+                    item: selectedItem, type: selectedfilterType
                 },
             },
             { skip: !selectedYear }
@@ -138,7 +140,10 @@ const TopTenItemYearWiseTable = ({
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Top Ten Item Year Wise  Sales Report");
         worksheet.columns = [
@@ -175,7 +180,9 @@ const TopTenItemYearWiseTable = ({
             localCompany,
             dynamicField: "Item",
 
-            dynamicValue: selectedItem
+            dynamicValue: selectedItem,
+            thirdDynamicField: "Business Model",
+            thirdDynamicValue: selectedfilterType
 
 
         });
@@ -204,7 +211,7 @@ const TopTenItemYearWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-          const row =   worksheet.addRow({
+            const row = worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -217,7 +224,7 @@ const TopTenItemYearWiseTable = ({
                 amount: Number(r.amount || 0)
             });
             row.getCell("invoiceQty").numFmt =
-                            getExcelQtyFormatByUOM(r.uom);
+                getExcelQtyFormatByUOM(r.uom);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -247,8 +254,8 @@ const TopTenItemYearWiseTable = ({
             customer: "",
 
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -263,7 +270,7 @@ const TopTenItemYearWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });
@@ -297,15 +304,49 @@ const TopTenItemYearWiseTable = ({
 
                     <div className="flex gap-2 items-center">
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             <div className="w-24">
 
                                 <select
                                     value={selectedYear || ""}
                                     onChange={(e) => {
                                         setSelectedYear(e.target.value);
-                                        setCurrentPage(1);  
-                                        if(selectedItem){
+                                        setCurrentPage(1);
+                                        if (selectedItem) {
                                             setSelectedItem("")
                                         }
                                     }} className="w-full px-2 py-1 text-xs border-2   rounded-md 
@@ -347,7 +388,7 @@ const TopTenItemYearWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option>Select Item</option>
 
                                     {itemOptions?.map((m) => (
                                         <option key={m} value={m}>

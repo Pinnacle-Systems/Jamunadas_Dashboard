@@ -187,13 +187,16 @@ export const addInsightsRowTurnOver = ({
   dynamicField,
   disableFinYear,
   secondDynamicField,
-  seconddynamicValue
+  seconddynamicValue,
+  thirdDynamicField,
+  thirdDynamicValue
 
 }) => {
 
 
 
   const insightText =
+    `${thirdDynamicField ? `${thirdDynamicField}: ${thirdDynamicValue}    |    ` : ""}` +
 
     `${disableFinYear ? "" : `FinYear :  ${selectedYear}    |    `}` +
     `Comp Code :  ${localCompany}    |    ` +

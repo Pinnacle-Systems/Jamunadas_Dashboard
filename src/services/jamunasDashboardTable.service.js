@@ -7,7 +7,7 @@ export async function getMonthlySalesTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, month } = req.query;
+        const { companyName, finYear, month, type } = req.query;
 
         console.log(companyName, "req.query for getMonthlySalesTable")
 
@@ -28,13 +28,21 @@ round(b.amount/b.invqty,2) rate  ,round(((a.netamt*((b.amount/a.gramt)*100))/100
 
       where c.compcode = ?
         AND d.finyr = ? AND e.payperiod  = ?
-
-
-        
-     
+        AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
       `,
-            [companyName, finYear, month]
+            [companyName, finYear, month, type, type, type]
 
         );
 
@@ -70,7 +78,7 @@ export async function getQuarterSalesTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, quarter } = req.query;
+        const { companyName, finYear, quarter, type } = req.query;
 
         console.log(companyName, "req.query for getQuarterSalesTable")
 
@@ -91,10 +99,22 @@ JOIN dtitemmast g     ON g.dtitemmastid = b.itemname
 JOIN gtcolormast h     ON h.gtcolormastid = b.color 
 JOIN sizemast i     ON i.sizemastid = b.sizes
 join gtunitmast g2 on g2.gtunitmastid  = b.uom 
-WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ? 
+WHERE c.compcode = ? AND d.finyr = ? AND e.quarter = ?
+    AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
       `,
-            [companyName, finYear, quarter]   // ✅ positional params
+            [companyName, finYear, quarter, type, type, type]   // ✅ positional params
 
         );
 
@@ -132,7 +152,7 @@ export async function getYearlySalesTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear } = req.query;
+        const { companyName, finYear, type } = req.query;
 
         console.log(companyName, "req.query for getYearlySalesTable")
 
@@ -153,9 +173,21 @@ ifnull(round(((a.netamt*((b.amount/a.gramt)*100))/100),2),0) amount       from g
  
       where c.compcode = ?
         AND d.finyr = ?
+              AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
 `,
-            [companyName, finYear]   // ✅ positional params
+            [companyName, finYear, type, type, type]   // ✅ positional params
 
         );
 
@@ -195,7 +227,7 @@ export async function getTopTenCustomerSalesYearlyTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, customer } = req.query;
+        const { companyName, finYear, customer, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenCustomerSalesYearlyTable")
 
@@ -216,10 +248,22 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
 
       where c.compcode = ?
         AND d.finyr = ? AND a.customer = ?
+              AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
   
 
       `,
-            [companyName, finYear, customer]   // ✅ positional params
+            [companyName, finYear, customer, type, type, type]   // ✅ positional params
 
         );
 
@@ -255,7 +299,7 @@ export async function getTopTenCustomerSalesMonthTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, customer, month } = req.query;
+        const { companyName, finYear, customer, month, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenCustomerSalesMonthTable")
 
@@ -273,11 +317,23 @@ export async function getTopTenCustomerSalesMonthTable(req, res) {
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND a.customer = ? AND e.payperiod  = ?
+            AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
       
 
       `,
-            [companyName, finYear, customer, month]   // ✅ positional params
+            [companyName, finYear, customer, month, type, type, type]   // ✅ positional params
 
         );
 
@@ -313,7 +369,7 @@ export async function getTopTenCustomerSalesWeekTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, customer } = req.query;
+        const { companyName, customer, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenCustomerSalesWeekTable")
 
@@ -332,11 +388,23 @@ export async function getTopTenCustomerSalesWeekTable(req, res) {
       join sizemast i on i.sizemastid = b.sizes
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?  AND a.customer = ?
+          AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
       AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
  
 
       `,
-            [companyName, customer]   // ✅ positional params
+            [companyName, customer, type, type, type]   // ✅ positional params
 
         );
 
@@ -372,7 +440,7 @@ export async function getTopTenCustomerSalesdailyTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, customer } = req.query;
+        const { companyName, customer, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenCustomerSalesdailyTable")
 
@@ -390,11 +458,23 @@ round(((a.netamt*((b.amount/a.gramt)*100))/100),2) amount      from gtsalesinv a
       join sizemast i on i.sizemastid = b.sizes
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?  AND a.customer = ?
+          AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
       AND a.docdate between CURRENT_DATE and CURRENT_DATE
 
 
       `,
-            [companyName, customer]   // ✅ positional params
+            [companyName, customer, type, type, type]   // ✅ positional params
 
         );
 
@@ -434,7 +514,7 @@ export async function getTopTenItemSalesYearTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, item } = req.query;
+        const { companyName, finYear, item, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenItemSalesYearTable")
 
@@ -454,9 +534,21 @@ export async function getTopTenItemSalesYearTable(req, res) {
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND g.itemname = ?
+            AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
       `,
-            [companyName, finYear, item]   // ✅ positional params
+            [companyName, finYear, item, type, type, type]   // ✅ positional params
 
         );
 
@@ -492,7 +584,7 @@ export async function getTopTenItemSalesMonthTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, finYear, item, month } = req.query;
+        const { companyName, finYear, item, month, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenItemSalesMonthTable")
 
@@ -512,10 +604,22 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ?
         AND d.finyr = ? AND g.itemname = ? AND e.payperiod  = ?
+          AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
 
 
       `,
-            [companyName, finYear, item, month]
+            [companyName, finYear, item, month, type, type, type]
 
         );
 
@@ -552,7 +656,7 @@ export async function getTopTenItemSalesWeekTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, item } = req.query;
+        const { companyName, item, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenItemSalesWeekTable")
 
@@ -572,11 +676,23 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
       join sizemast i on i.sizemastid = b.sizes
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ? AND g.itemname = ?
+        AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
       AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
     
 
       `,
-            [companyName, item]   // ✅ positional params
+            [companyName, item, type, type, type]   // ✅ positional params
 
         );
 
@@ -612,7 +728,7 @@ export async function getTopTenItemSalesdailyTable(req, res) {
     const pool = getJDASConnectionPool();
 
     try {
-        const { companyName, item } = req.query;
+        const { companyName, item, type } = req.query;
 
         console.log(companyName, "req.query for getTopTenItemSalesdailyTable")
 
@@ -631,11 +747,23 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
       join sizemast i on i.sizemastid = b.sizes
             join gtunitmast g2 on g2.gtunitmastid  = b.uom 
       where c.compcode = ? AND g.itemname = ?
+          AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
       AND a.docdate between CURRENT_DATE and CURRENT_DATE
     
 
       `,
-            [companyName, item]   // ✅ positional params
+            [companyName, item, type, type, type]   // ✅ positional params
 
         );
 

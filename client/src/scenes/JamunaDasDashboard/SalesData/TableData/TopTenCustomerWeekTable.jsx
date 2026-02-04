@@ -18,7 +18,7 @@ import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
 const TopTenCustomerWeekWiseTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions
+    year, customer, company, closeTable, finYrData, customerOptions, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(customer, finYrData, "receivedparams")
@@ -33,14 +33,16 @@ const TopTenCustomerWeekWiseTable = ({
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
-
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading , isFetching} =
+    const { data: response, isLoading, isFetching } =
         useGetTopTenCustomerWeekTableQuery(
             {
                 params: {
                     companyName: localCompany,
-                    customer: selectedCustomer
+                    customer: selectedCustomer, type: selectedfilterType
                 },
             },
             // { skip: !localYear }
@@ -137,7 +139,10 @@ const TopTenCustomerWeekWiseTable = ({
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Top Ten Customer Week Wise Sales Report");
         worksheet.columns = [
@@ -172,7 +177,9 @@ const TopTenCustomerWeekWiseTable = ({
             localCompany,
             dynamicField: "Customer",
 
-            dynamicValue: selectedCustomer
+            dynamicValue: selectedCustomer,
+            thirdDynamicField: "Business Model",
+            thirdDynamicValue: selectedfilterType
 
 
         });
@@ -201,7 +208,7 @@ const TopTenCustomerWeekWiseTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-         const row =    worksheet.addRow({
+            const row = worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -213,7 +220,7 @@ const TopTenCustomerWeekWiseTable = ({
                 rate: Number(r.rate || 0),
                 amount: Number(r.amount || 0)
             });
-                 row.getCell("invoiceQty").numFmt =
+            row.getCell("invoiceQty").numFmt =
                 getExcelQtyFormatByUOM(r.uom);
         });
 
@@ -242,8 +249,8 @@ const TopTenCustomerWeekWiseTable = ({
             salesType: "",
             itemName: "",
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -258,7 +265,7 @@ const TopTenCustomerWeekWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });
@@ -293,7 +300,41 @@ const TopTenCustomerWeekWiseTable = ({
 
                     <div className="flex gap-2 items-center">
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             {/* <div className="w-24">
 
                                 <select
@@ -340,7 +381,7 @@ const TopTenCustomerWeekWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="ALL">ALL</option>
+                                    <option>Select Customer</option>
 
                                     {customerOptions?.map((m) => (
                                         <option key={m} value={m}>

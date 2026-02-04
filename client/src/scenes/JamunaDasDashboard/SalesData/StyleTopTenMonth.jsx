@@ -8,19 +8,22 @@ import FinYear from "../../../components/FinYear.js";
 import TopTenItemMonthWiseTable from "./TableData/TopTenItemrMonthTable.jsx";
 import SpinLoader from '../../../utils/spinLoader'
 
-const StyleTopTenMonth = ({ yearFilter, setYearFilter, selectedCompany, finYrData }) => {
+const StyleTopTenMonth = ({ yearFilter, setYearFilter, selectedCompany, finYrData, filterType, setFilterType }) => {
   const theme = useTheme();
   const [selectMonths, setSelectMonths] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
 
 
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
-
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
 
 
   console.log({ selectedYear, selectedCompany, selectMonths }, "StyleTopTenMonth");
@@ -33,7 +36,7 @@ const StyleTopTenMonth = ({ yearFilter, setYearFilter, selectedCompany, finYrDat
     })}`;
 
   const { data: response, isFetching, isLoading } = useGetTopTenItemMonthQuery(
-    { params: { selectedYear, selectedCompany, selectMonths } },
+    { params: { selectedYear, selectedCompany, selectMonths, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany || !selectMonths }
   );
 
@@ -246,9 +249,13 @@ const StyleTopTenMonth = ({ yearFilter, setYearFilter, selectedCompany, finYrDat
             setShowTable(false);
             setTableParams(null);
             setSelectedYear(yearFilter)
+            setSelectedFilterType(filterType)
+
           }}
           selectMonths={selectMonths}
           setSelectMonths={setSelectMonths}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
     </Card>

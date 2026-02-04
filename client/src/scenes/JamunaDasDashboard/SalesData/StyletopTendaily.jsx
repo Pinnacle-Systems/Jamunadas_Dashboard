@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Card, CardHeader, CardContent, useTheme } from "@mui/material";
@@ -13,11 +13,15 @@ const COLORS = [
   "#00CED1", "#DC143C",
 ];
 
-const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
+const StyleTop10Daily = ({ selectedYear, selectedCompany, filterType, setFilterType }) => {
   const theme = useTheme();
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -26,7 +30,7 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
 
   /* ---------- API ---------- */
   const { data: response, isFetching, isLoading } = useGetTopTenItemDailyQuery(
-    { params: { selectedYear, selectedCompany } },
+    { params: { selectedYear, selectedCompany, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany }
   );
 
@@ -156,8 +160,12 @@ const StyleTop10Daily = ({ selectedYear, selectedCompany }) => {
           closeTable={() => {
             setShowTable(false);
             setTableParams(null);
+            setSelectedFilterType(filterType)
+
           }}
           itemOptions={itemOptions}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
 

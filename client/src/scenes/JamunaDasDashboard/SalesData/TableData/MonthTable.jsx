@@ -17,7 +17,7 @@ import moment from "moment";
 import { addInsightsRowTurnOver, formatQtyByUOM, getExcelQtyFormatByUOM } from "../../../../utils/hleper";
 import SpinLoader from '../../../../utils/spinLoader'
 const MonthWiseTable = ({
-    year, month, company, closeTable, finYrData, monthOptions, setSelectedYear, selectedYear
+    year, month, company, closeTable, finYrData, monthOptions, setSelectedYear, selectedYear, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(year, month, company, closeTable, finYrData, "receivedparams")
@@ -29,6 +29,9 @@ const MonthWiseTable = ({
     const [selectedMonth, setSelectedMonth] = useState(month || "ALL");
     const [localCompany, setLocalCompany] = useState(company || "ALL");
     // const [localYear, setLocalYear] = useState(year);
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -41,7 +44,7 @@ const MonthWiseTable = ({
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: selectedYear,
-                    month: selectedMonth
+                    month: selectedMonth, type: selectedfilterType
                 },
             },
             { skip: !selectedYear }
@@ -57,7 +60,7 @@ const MonthWiseTable = ({
         // when year OR monthOptions change → reset month
         setSelectedMonth("ALL");
         setCurrentPage(1);
-    }, [year, monthOptions]);
+    }, [year]);
 
 
     // ✅ FILTERING
@@ -181,7 +184,9 @@ const MonthWiseTable = ({
             selectedYear: selectedYear,
             localCompany,
             dynamicField: "Month",
-            dynamicValue: selectedMonth
+            dynamicValue: selectedMonth,
+            thirdDynamicField:"Business Model",
+            thirdDynamicValue:selectedfilterType
 
         });
 
@@ -301,8 +306,43 @@ const MonthWiseTable = ({
                     </h2>
 
                     <div className="flex gap-2 items-center">
+                       
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             <div className="w-24">
 
                                 <select
@@ -360,10 +400,10 @@ const MonthWiseTable = ({
                                         <option key={m} value={m}>{m}</option>
                                     ))} */}
                                     {!monthOptions || monthOptions.length === 0 ? (
-                                        <option value="">Loading months...</option> // show loading
+                                        <option  >Loading months...</option> // show loading
                                     ) : (
                                         <>
-                                            <option value="ALL">ALL</option>
+                                            <option  >Select Month</option>
                                             {monthOptions?.map((m) => (
                                                 <option key={m} value={m}>{m}</option>
                                             ))}

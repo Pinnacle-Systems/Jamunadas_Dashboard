@@ -64,7 +64,7 @@ const ActiveTabList = () => {
       },
     },
     // MISDashboard: <Main_Dashboad />,
-    MISDashboard: <JamunaDasIndex/>,
+    "MIS Dashboard": <JamunaDasIndex/>,
     ESIDetail: (tabData) => (
       <DetailedDashBoard
         companyName={tabData?.companyName}

@@ -29,17 +29,21 @@ const QUARTER_COLORS = {
   Q4: "#0088FE",
 };
 
-const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
+const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData, filterType, setFilterType
 }) => {
   const theme = useTheme();
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
-
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
+  console.log(selectedfilterType, "filterType");
 
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -48,7 +52,7 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
 
   const { data: response, isLoading, isFetching } =
     useGetQuarterSalesQuery({
-      params: { selectedYear, selectedCompany },
+      params: { selectedYear, selectedCompany, type: selectedfilterType },
     });
 
   /* ---------- PROCESS DATA (APR → MAR) ---------- */
@@ -299,10 +303,12 @@ const QuarterSales = ({ yearFilter, setYearFilter, selectedCompany, finYrData
             setShowTable(false);
             setTableParams(null);
             setSelectedYear(yearFilter)
+            setSelectedFilterType(filterType)
 
           }}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
         />
       )}
 

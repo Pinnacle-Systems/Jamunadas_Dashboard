@@ -15,20 +15,21 @@ import SpinLoader from '../../../utils/spinLoader'
 
 import MonthWiseTable from "../SalesData/TableData/MonthTable.jsx";
 
-const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
+const MonthlySales = ({ yearFilter, selectedCompany, finYrData, filterType, setFilterType }) => {
   const theme = useTheme();
   const [tableParams, setTableParams] = useState(null);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
-
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
-
-  const [childMonth,setChildMonth] = useState(selectedMonth)
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -38,7 +39,7 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
 
   /* ---------------- API ---------------- */
   const { data: response, isLoading, isFetching } = useGetMonthlySalesQuery({
-    params: { selectedYear, selectedCompany },
+    params: { selectedYear, selectedCompany, type: selectedfilterType },
   });
 
   /* ---------------- Normalize API Data ---------------- */
@@ -348,7 +349,7 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
               </Box>
 
               <CardContent sx={{ position: "relative", height: 260, p: 0 }}>
-                {selectedMonth  ? (
+                {selectedMonth ? (
                   <>
                     <HighchartsReact
                       highcharts={Highcharts}
@@ -406,7 +407,11 @@ const MonthlySales = ({ yearFilter, selectedCompany, finYrData }) => {
             setShowTable(false);
             setTableParams(null);
             setSelectedYear(yearFilter)
+            setSelectedFilterType(filterType)
+
           }}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
 

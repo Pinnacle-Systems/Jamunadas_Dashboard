@@ -13,11 +13,12 @@ const COLORS = [
     "#00CED1", "#DC143C",
 ];
 
-const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData, }) => {
+const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData, filterType, setFilterType }) => {
     const theme = useTheme();
     const [showTable, setShowTable] = useState(false);
     const [tableParams, setTableParams] = useState(null);
     const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+    const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
 
     console.log(yearFilter, "yearFilter", selectedYear);
@@ -26,7 +27,9 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData
         setSelectedYear(yearFilter)
     }, [yearFilter])
 
-
+    useEffect(() => {
+        setSelectedFilterType(filterType)
+    }, [filterType])
 
     /* ---------- INR Formatter ---------- */
     const formatINR = (value) =>
@@ -37,7 +40,7 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData
 
     /* ---------- API ---------- */
     const { data: apiResponse, isLoading, isFetching } = useGetTopTenItemYearQuery(
-        { params: { selectedYear, selectedCompany } },
+        { params: { selectedYear, selectedCompany, type: selectedfilterType } },
         { skip: !selectedYear || !selectedCompany }
     );
 
@@ -211,9 +214,13 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData
                         setShowTable(false);
                         setTableParams(null);
                         setSelectedYear(yearFilter)
+                        setSelectedFilterType(filterType)
+
                     }}
                     selectedYear={selectedYear}
                     setSelectedYear={setSelectedYear}
+                    selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
                 />
             )}
         </Card>

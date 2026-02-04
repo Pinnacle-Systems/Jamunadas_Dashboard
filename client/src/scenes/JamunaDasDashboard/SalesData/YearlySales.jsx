@@ -7,15 +7,18 @@ import YearlyTable from "../SalesData/TableData/Yeartable.jsx";
 import { useGetYearlySalesQuery } from "../../../redux/service/jamunasDashboardService.js";
 import SpinLoader from '../../../utils/spinLoader'
 
-const YearlySales = ({ selectedCompany, year, finYrData }) => {
+const YearlySales = ({ selectedCompany, year, finYrData, filterType, setFilterType }) => {
     const [xdata, setXdata] = useState([]);
     const [ydata, setYdata] = useState([]);
     const theme = useTheme();
     const [showTable, setShowTable] = useState(false);
     const [tableParams, setTableParams] = useState(null);
-
-    const { data: response, isLoading ,isFetching} = useGetYearlySalesQuery({
-        params: { selectedCompany, year },
+    const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
+    useEffect(() => {
+        setSelectedFilterType(filterType)
+    }, [filterType])
+    const { data: response, isLoading, isFetching } = useGetYearlySalesQuery({
+        params: { selectedCompany, year, type: selectedfilterType },
     });
 
     const formatINR = (value) =>
@@ -147,7 +150,14 @@ const YearlySales = ({ selectedCompany, year, finYrData }) => {
                     company={tableParams.company}
                     year={tableParams.year}
                     finYrData={finYrData}
-                    closeTable={() => setShowTable(false)}
+                    closeTable={() => {
+                        setShowTable(false)
+                        setSelectedFilterType(filterType)
+
+                    }
+                    }
+                    selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
                 />
             )}
         </Card>

@@ -16,20 +16,23 @@ const COLORS = [
   "#00CED1", "#DC143C",
 ];
 
-const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData }) => {
+const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData, filterType, setFilterType }) => {
   const theme = useTheme();
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [tableParams, setTableParams] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "")
+  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL")
 
 
 
   useEffect(() => {
     setSelectedYear(yearFilter)
   }, [yearFilter])
-
+  useEffect(() => {
+    setSelectedFilterType(filterType)
+  }, [filterType])
   /* ---------------- INR Formatter ---------------- */
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -39,7 +42,7 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
 
   /* ---------------- API ---------------- */
   const { data: customer, isLoading, isFetching } = useGetTopTenCustomerQuery(
-    { params: { selectedYear, selectedCompany } },
+    { params: { selectedYear, selectedCompany, type: selectedfilterType } },
     { skip: !selectedYear || !selectedCompany }
   );
 
@@ -201,9 +204,13 @@ const CustomerTopTen = ({ yearFilter, setYearFilter, selectedCompany, finYrData 
             setShowTable(false);
             setTableParams(null);
             setSelectedYear(yearFilter)
+            setSelectedFilterType(filterType)
+
           }}
           setSelectedYear={setSelectedYear}
           selectedYear={selectedYear}
+          selectedfilterType={selectedfilterType} setSelectedFilterType={setSelectedFilterType}
+
         />
       )}
     </Card>

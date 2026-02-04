@@ -18,7 +18,7 @@ import SpinLoader from '../../../../utils/spinLoader'
 import FinYear from "../../../../components/FinYear";
 import moment from "moment";
 const TopTenCustomerMonthWiseTable = ({
-    year, customer, company, closeTable, finYrData, customerOptions, month, setSelectedYear, selectedYear, setSelectMonths, selectMonths
+    year, customer, company, closeTable, finYrData, customerOptions, month, setSelectedYear, selectedYear, setSelectMonths, selectMonths, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(month, year, customer, company, finYrData, "receivedparams")
@@ -32,7 +32,9 @@ const TopTenCustomerMonthWiseTable = ({
     const [localCompany, setLocalCompany] = useState(company || "ALL");
     // const [localYear, setLocalYear] = useState(year);
 
-
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 34;
@@ -45,7 +47,7 @@ const TopTenCustomerMonthWiseTable = ({
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: selectedYear,
                     customer: selectedCustomer,
-                    month: selectMonths
+                    month: selectMonths, type: selectedfilterType
                 },
             },
             { skip: !selectedYear }
@@ -186,7 +188,9 @@ const TopTenCustomerMonthWiseTable = ({
             dynamicValue: selectMonths,
             secondDynamicField: "Customer",
 
-            seconddynamicValue: selectedCustomer
+            seconddynamicValue: selectedCustomer,
+            thirdDynamicField: "Business Model",
+            thirdDynamicValue: selectedfilterType
 
 
         });
@@ -307,7 +311,41 @@ const TopTenCustomerMonthWiseTable = ({
 
                     <div className="flex gap-2 items-center">
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             <div className="w-24">
 
                                 <select
@@ -372,7 +410,7 @@ const TopTenCustomerMonthWiseTable = ({
                                     className="w-full px-2 py-1 text-xs border-2 rounded-md
                border-blue-600 transition-all duration-200"
                                 >
-                                    <option value="All">ALL</option>
+                                    <option>Select Customer</option>
 
                                     {customerOptions?.map((m) => (
                                         <option key={m} value={m}>

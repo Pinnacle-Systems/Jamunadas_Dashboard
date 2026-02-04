@@ -18,7 +18,7 @@ import SpinLoader from '../../../../utils/spinLoader'
 import moment from "moment";
 // import FinYear from "../../../../components/FinYear";
 const QuarterWiseTable = ({
-    year, quarter, company, closeTable, finYrData, quarterOptions, month, setSelectedYear, selectedYear
+    year, quarter, company, closeTable, finYrData, quarterOptions, month, setSelectedYear, selectedYear, selectedfilterType, setSelectedFilterType
 }) => {
 
     console.log(year, quarter, company, closeTable, finYrData, "receivedparams")
@@ -27,12 +27,15 @@ const QuarterWiseTable = ({
         min: 0,
         max: Infinity,
     });
-    const [selectedQuarter, setSelectedQuarter] = useState(quarter || "ALL");
+    const [selectedQuarter, setSelectedQuarter] = useState(quarter || "");
     const [selectedMonth, setSelectedMonth] = useState(month || "ALL")
     const [localCompany, setLocalCompany] = useState(company || "ALL");
 
     const [search, setSearch] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+    const handleFilterClick = (type) => {
+        setSelectedFilterType(type);
+    };
     const recordsPerPage = 34;
 
     // ✅ API CALL INSIDE TABLE
@@ -42,10 +45,10 @@ const QuarterWiseTable = ({
                 params: {
                     companyName: localCompany === "ALL" ? undefined : localCompany,
                     finYear: selectedYear,
-                    quarter: selectedQuarter
+                    quarter: selectedQuarter, type: selectedfilterType
                 },
             },
-            { skip: !selectedYear }
+            { skip: !selectedYear || !selectedQuarter }
         );
 
     const rawData = useMemo(() => {
@@ -226,7 +229,9 @@ const QuarterWiseTable = ({
             dynamicField: "Quarter",
             dynamicValue: selectedQuarter,
             secondDynamicField: "Month",
-            seconddynamicValue: selectedMonth
+            seconddynamicValue: selectedMonth,
+            thirdDynamicField: "Business Model",
+            thirdDynamicValue: selectedfilterType
 
         });
 
@@ -352,7 +357,41 @@ const QuarterWiseTable = ({
 
                     <div className="flex gap-2 items-center">
                         <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+                            <button
+                                onClick={() => handleFilterClick("B2B")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2B"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2B
+                            </button>
 
+                            <button
+                                onClick={() => handleFilterClick("B2C")}
+                                className={`w-12 text-center flex items-center gap-2 px-2.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "B2C"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                B2C
+                            </button>
+
+                            <button
+                                onClick={() => handleFilterClick("ALL")}
+                                className={`w-12 text-center flex items-center gap-2 px-3.5 py-0.5 text-[12px] font-semibold rounded-full shadow-md transition-all 
+      ${selectedfilterType === "ALL"
+                                        ? "bg-blue-600 text-white scale-105"
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }
+      focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                            >
+                                All
+                            </button>
                             <div className="w-24">
 
                                 <select
@@ -410,11 +449,11 @@ const QuarterWiseTable = ({
 
                                     {
                                         !quarterOptions || quarterOptions?.length === 0 ? (
-                                            <option value="">Loading Quarter...</option> // show loading
+                                            <option >Loading Quarter...</option> // show loading
 
                                         ) : (
                                             <>
-                                                <option value="ALL">ALL</option>
+                                                <option >Select Quarter</option>
 
                                                 {quarterOptions?.map((m) => (
                                                     <option key={m} value={m}>
