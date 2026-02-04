@@ -138,13 +138,17 @@ const MonthWiseTable = ({
 
     }
 
+
     // ✅ EXCEL EXPORT
     const downloadExcel = async () => {
         if (!filteredData.length) {
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Month Wise Sales Report");
         worksheet.columns = [
@@ -247,8 +251,8 @@ const MonthWiseTable = ({
             customer: "",
             itemName: "",
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -263,7 +267,7 @@ const MonthWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });

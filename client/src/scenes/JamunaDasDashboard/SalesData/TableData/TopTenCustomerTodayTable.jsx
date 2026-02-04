@@ -138,7 +138,10 @@ const TopTenCustomerTodayTable = ({
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Top Ten Customer Today Sales Report");
         worksheet.columns = [
@@ -202,7 +205,7 @@ const TopTenCustomerTodayTable = ({
 
         /* ================= DATA ================= */
         filteredData.forEach((r) => {
-          const row =   worksheet.addRow({
+            const row = worksheet.addRow({
                 customer: r.customer,
                 month: r.month,
                 docNo: r.docId,
@@ -214,7 +217,7 @@ const TopTenCustomerTodayTable = ({
                 rate: Number(r.rate || 0),
                 amount: Number(r.amount || 0)
             });
-              // ✅ UOM-based decimal formatting
+            // ✅ UOM-based decimal formatting
             row.getCell("invoiceQty").numFmt =
                 getExcelQtyFormatByUOM(r.uom);
         });
@@ -244,8 +247,8 @@ const TopTenCustomerTodayTable = ({
             salesType: "",
             itemName: "",
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -260,7 +263,7 @@ const TopTenCustomerTodayTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });

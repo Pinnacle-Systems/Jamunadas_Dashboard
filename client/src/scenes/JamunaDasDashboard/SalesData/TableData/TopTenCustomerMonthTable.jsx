@@ -146,7 +146,10 @@ const TopTenCustomerMonthWiseTable = ({
             alert("No data");
             return;
         }
-
+        const totalRate = filteredData.reduce(
+            (sum, r) => sum + Number(r.rate || 0),
+            0
+        );
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Top Ten Customer Month Wise Sales Report");
         worksheet.columns = [
@@ -253,8 +256,8 @@ const TopTenCustomerMonthWiseTable = ({
             salesType: "",
             itemName: "",
             invoiceQty: "",
-            uom: "",
-            rate: "Total",
+            uom: "Total",
+            rate: totalRate,
             amount: totalTurnOver,
         });
 
@@ -269,7 +272,7 @@ const TopTenCustomerMonthWiseTable = ({
             };
             cell.alignment = {
                 vertical: "middle",
-                horizontal: colNumber === 10 ? "right" : "center",
+                horizontal: (colNumber === 9 || colNumber === 10) ? "right" : "center",
                 indent: 1
             };
         });

@@ -278,7 +278,7 @@ const TopTenItemMonthWiseTable = ({
         });
         worksheet.getColumn("docDate").numFmt = "dd-mm-yyyy";
         // worksheet.getColumn("invoiceQty").numFmt = "#,##,##0.000";
-
+//aas
         worksheet.getColumn("rate").numFmt = '₹ #,##,##0.00';
         worksheet.getColumn("amount").numFmt = '₹ #,##,##0.00';
 
