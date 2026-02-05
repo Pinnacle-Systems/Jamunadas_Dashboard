@@ -37,7 +37,7 @@ const YearlyTable = ({
         setSelectedFilterType(type);
     };
     // ✅ API CALL INSIDE TABLE
-    const { data: response, isLoading } =
+    const { data: response, isLoading,isFetching  } =
         useGetYearlySalesTableQuery(
             {
                 params: {
@@ -472,7 +472,7 @@ const YearlyTable = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading ? (
+                                {isLoading || isFetching ? (
                                     <tr>
                                         <td colSpan={8} className=" text-center">
                                             <div className="flex justify-center items-center pointer-events-none">

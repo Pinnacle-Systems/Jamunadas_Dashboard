@@ -14,23 +14,42 @@ import StyleTopTenMonth from "./StyleTopTenMonth.jsx";
 import StyleTop10Week from "./StyleTopTenWeek.jsx";
 import StyleTop10Daily from "./StyletopTendaily.jsx";
 
-const SalesDetail = ({ selectedYear, selectedCompany }) => {
+const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
+
+
+
+    console.log(selectedFilter, "selectedFilter");
+
 
   const [yearFilter, setYearFilter] = useState(selectedYear || "");
   const [company, setCompany] = useState("HVM");
-  const [filterType, setFilterType] = useState("ALL")
+  const [filterType, setFilterType] = useState(selectedFilter ? selectedFilter : "" );
+
+  console.log(filterType,"filterType");
+  
+
   const { data: finYrData } = useGetFinYearQuery();
 
 
   useEffect(() => {
     setYearFilter(selectedYear || "");
+    setFilterType(selectedFilter)
   }, [selectedYear]);
   useEffect(() => {
     setCompany(selectedCompany || "");
   }, [selectedCompany]);
 
 
-  console.log(selectedCompany, company, "selectedYear");
+
+  useEffect(() => {
+  setFilterType(selectedFilter || "");
+  // console.log("Hit filtertype")
+}, [selectedFilter]);
+
+
+
+
+  console.log(selectedCompany, company, selectedFilter, "selectedYear");
 
 
   return (

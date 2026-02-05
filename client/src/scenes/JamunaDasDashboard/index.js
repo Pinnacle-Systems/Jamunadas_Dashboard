@@ -20,6 +20,10 @@ import { getCommonParams } from "../../utils/hleper";
 import { useGetFnameQuery } from "../../redux/service/user";
 import { useGetFinYearQuery } from "../../redux/service/jamunasDashboardService.js";
 import { useSelector, useDispatch } from "react-redux";
+import {
+  useGetRoleQuery,
+  useGetuserpagesQuery,
+} from "../../redux/service/Rolemaster";
 import { setSelectedYear, setFilterBuyer, setSelectMonths, setFinYr, setLastSection } from "../../redux/features/dashboardFiltersSlice";
 const JamunaDasIndex = () => {
   const dispatch = useDispatch();
@@ -43,11 +47,17 @@ const JamunaDasIndex = () => {
 
 
   const params = getCommonParams();
-  const { isSuperAdmin, employeeId } = params;
+  const { isSuperAdmin, employeeId, userId } = params;
 
   const { data: userName } = useGetFnameQuery({
     params: { employeeId },
   });
+
+  const { data: allPages } = useGetuserpagesQuery(
+    { params: { userId } },
+  );
+  const usernames = allPages.map(item => item.username).join(", ");
+  console.log(usernames, "checkingname");
 
   useEffect(() => {
     if (!isSuperAdmin && userName?.data?.length) {
@@ -103,6 +113,7 @@ const JamunaDasIndex = () => {
             selectMonths={selectMonths}
             finYr={finYr}
             user={user}
+            usernames={usernames}
             onFilterBuyerChange={(val) => dispatch(setFilterBuyer(val))}
             onYearChange={(val) => dispatch(setSelectedYear(val))}
             onMonthChange={(val) => dispatch(setSelectMonths(val))}
@@ -179,15 +190,15 @@ const JamunaDasIndex = () => {
 
         <Grid item xs={12} md={6}>
           <SalesData
-            // filterBuyer={filterBuyer}
-            // selectedYear={selectedYear}
-            // selectMonths={selectMonths}
-            // finYr={finYr}
-            // user={user}
-            // onFilterBuyerChange={(val) => dispatch(setFilterBuyer(val))}
-            // onYearChange={(val) => dispatch(setSelectedYear(val))}
-            // onMonthChange={(val) => dispatch(setSelectMonths(val))}
-            // filterBuyerList={filterBuyerList} onOpen={() => dispatch(setLastSection("turnover"))}
+          // filterBuyer={filterBuyer}
+          // selectedYear={selectedYear}
+          // selectMonths={selectMonths}
+          // finYr={finYr}
+          // user={user}
+          // onFilterBuyerChange={(val) => dispatch(setFilterBuyer(val))}
+          // onYearChange={(val) => dispatch(setSelectedYear(val))}
+          // onMonthChange={(val) => dispatch(setSelectMonths(val))}
+          // filterBuyerList={filterBuyerList} onOpen={() => dispatch(setLastSection("turnover"))}
           />
         </Grid>
 

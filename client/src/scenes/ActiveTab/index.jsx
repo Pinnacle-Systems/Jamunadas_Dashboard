@@ -6,7 +6,7 @@ import { CLOSE_ICON, DOUBLE_NEXT_ICON } from "../../icons";
 import { useState } from "react";
 import useOutsideClick from "../../CustomHooks/handleOutsideClick";
 import PoRegister from "../poRegister";
-import { FreeLookDyeing, MisDashboard,JamunaDasIndex } from "../../scenes";
+import { FreeLookDyeing, MisDashboard, JamunaDasIndex } from "../../scenes";
 import MisDashboardERP from "../MisDashboard copy";
 import OrderManagement from "../OrderManagement";
 // import OutlinedCard from "../Users/Users";
@@ -64,7 +64,7 @@ const ActiveTabList = () => {
       },
     },
     // MISDashboard: <Main_Dashboad />,
-    "MIS Dashboard": <JamunaDasIndex/>,
+    "MIS Dashboard": <JamunaDasIndex />,
     ESIDetail: (tabData) => (
       <DetailedDashBoard
         companyName={tabData?.companyName}
@@ -129,9 +129,21 @@ const ActiveTabList = () => {
     //     autoFocusBuyer={tabData?.autoFocusBuyer}
     //   />
     // ),
-    SalesDetail: (tabData) => (
-      <SalesDetail selectedYear={tabData?.selectedYear} selectedCompany={tabData?.selectedCompany} />
-    ),
+    // SalesDetail: (tabData) => (
+    //   <SalesDetail selectedYear={tabData?.selectedYear} selectedCompany={tabData?.selectedCompany} selectedFilter={tabData?.selectedFilter}/>
+    // ),
+    SalesDetail: (tabData) => {
+      console.log("FULL TAB OBJECT:", tabData);
+
+      return (
+        <SalesDetail
+          selectedYear={tabData?.selectedYear}
+          selectedCompany={tabData?.selectedCompany}
+          selectedFilter={tabData?.selectedFilter}
+        />
+      );
+    },
+
   };
 
   // console.log(openTabs, "openTabs");

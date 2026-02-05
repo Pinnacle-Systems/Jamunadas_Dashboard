@@ -176,7 +176,7 @@ const DashboardHeader = ({
   selectMonths,
   onFilterBuyerChange,
   onYearChange,
-  onMonthChange,
+  onMonthChange,usernames
 }) => {
     console.log(finYr, "kjddlfjlkdr");
 
@@ -200,7 +200,8 @@ const DashboardHeader = ({
           sx={{ width: 56, height: 56 }}
         />
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Welcome Back, {user || "SuperAdmin"} 👋
+          Welcome Back, {usernames || "SuperAdmin"} 👋
+          {/* Welcome Back 👋 */}
         </Typography>
       </Box>
 

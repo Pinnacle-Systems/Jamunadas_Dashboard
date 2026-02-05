@@ -44,6 +44,8 @@ const SalesData = () => {
 
   const salesYear = salesData.map((item) => item.year);
   const salesValue = salesData.map((item) => item.totalSales);
+  let selectedFilter = "ALL"
+  console.log(selectedFilter, "selectedFilter");
 
   const sumTotal = salesData.reduce(
     (sum, item) => sum + item.totalSales,
@@ -66,7 +68,6 @@ const SalesData = () => {
 
           const selectedYear = salesData[index]?.year;
           const selectedCompany = salesData[index]?.company;
-
           dispatch(
             push({
               id: "SalesDetail",
@@ -75,6 +76,7 @@ const SalesData = () => {
               data: {
                 selectedYear,
                 selectedCompany,   // ✅ pass company
+                selectedFilter: selectedFilter, // ✅ explicit
               },
             })
           );
