@@ -45,302 +45,324 @@ const JamunasDashboard = createApi({
           },
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getMonthlySales: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/monthlysales",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getQuarterSales: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/quartersales",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getYearlySales: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/yearlysales",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomer: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomer",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerMonth: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerMonth",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerWeek: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerWeek",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerDaily: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerDaily",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemYear: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemYear",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemMonth: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemMonth",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemWeek: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemWeek",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemDaily: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemDaily",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getMonthlySalesTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/monthlysalesTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getQuarterSalesTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/quartersalesTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getYearlySalesTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/yearlysalesTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerYearTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerYearTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerMonthTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerMonthTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerWeekTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerWeekTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenCustomerDailyTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenCustomerDailyTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemYearTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemYearTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemMonthTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemMonthTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemWeekTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemWeekTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
     getTopTenItemDailyTable: builder.query({
-      query: ({params}) => {
+      query: ({ params }) => {
         return {
           url: JAMUNAS_DASHBOARD + "/topTenItemDailyTable",
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-           params,
+          params,
         };
       },
-      providesTags: ['JamunasDashboard'],
+      providesTags: ["JamunasDashboard"],
     }),
-
-
-
+    getTopItemMonth: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/topItemMonth",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
+    getTopItemWeek: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/topItemWeek",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
   }),
 });
 
 export const {
-
   useGetFinYearQuery,
   useGetTotalSalesQuery,
   useGetMonthlySalesQuery,
@@ -364,10 +386,9 @@ export const {
   useGetTopTenItemYearTableQuery,
   useGetTopTenItemMonthTableQuery,
   useGetTopTenItemWeekTableQuery,
-  useGetTopTenItemDailyTableQuery
-
-  
-
+  useGetTopTenItemDailyTableQuery,
+  useGetTopItemMonthQuery,
+  useGetTopItemWeekQuery
 } = JamunasDashboard;
 
 export default JamunasDashboard;

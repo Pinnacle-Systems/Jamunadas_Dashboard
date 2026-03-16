@@ -170,13 +170,6 @@ const StyleTopTenYear = ({ yearFilter, setYearFilter, selectedCompany, finYrData
                 sx={{ p: 1, borderBottom: `2px solid ${theme.palette.divider}` }}
             />
 
-            {/* <CardContent>
-                <HighchartsReact
-                    highcharts={Highcharts}
-                    options={options}
-                    immutable
-                />
-            </CardContent> */}
             <CardContent sx={{ position: "relative", minHeight: 440 }}>
                 {(isLoading || isFetching) && (
                     <div

@@ -124,9 +124,9 @@ const JamunaDasIndex = () => {
         <Grid item xs={10} md={4}>
           <Trophy />
         </Grid>
-        <Grid item xs={12} md={8}>
+        {/* <Grid item xs={12} md={8}>
           <StatisticsCard />
-        </Grid>
+        </Grid> */}
         <Grid container spacing={1} sx={{ mt: 1, ml: 1 }}>
           <Grid item xs={12} md={3}>
             <CardStatisticsVerticalComponent
@@ -172,7 +172,7 @@ const JamunaDasIndex = () => {
 
         </Grid>
 
-        {/* <Grid item xs={12} md={7} >
+        {/* <Grid item xs={12} md={7}>
           <TurnOver
             filterBuyer={filterBuyer}
             selectedYear={selectedYear}
@@ -202,11 +202,6 @@ const JamunaDasIndex = () => {
           />
         </Grid>
 
-        {/* <Grid item xs={12} md={6}>
-          <StyleSalesData
-       
-          />
-        </Grid> */}
       </Grid>
     </div>
   );
