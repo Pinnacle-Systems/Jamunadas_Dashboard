@@ -745,11 +745,13 @@ export async function getTopItemMonth(req, res) {
       `
 select a.* from 
 (select f.payperiod,d.finyr,e.compcode,g.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales,
-case when ? = 'quantity' then sum(b.delqty) else sum(a.netamt) end cnt
+case when ? ='quantity' then sum(b.delqty) else sum(a.netamt) end cnt,
+g2.unitname
 from gtsalesinv a
 join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
 join gtcompmast e on e.gtcompmastid = a.compcode
 join gtfinancialyear d on d.gtfinancialyearid = a.finyear
+join gtunitmast g2 on g2.gtunitmastid =b.uom
 join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
 join dtitemmast g on g.dtitemmastid = b.itemname
 where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ? 
@@ -768,7 +770,11 @@ where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ?
         )
 group by f.payperiod,d.finyr,e.compcode,g.itemname
 ) a
-order by a.totalsales desc  
+ORDER BY
+    CASE
+        WHEN ? = 'value' THEN a.totalsales
+        WHEN ? = 'quantity' THEN a.cnt
+   END DESC
 limit 1
 
       `,
@@ -782,6 +788,9 @@ limit 1
         type,
         type,
         type,
+        valueType,
+        valueType
+        
       ], // ✅ positional params
     );
 
@@ -792,6 +801,7 @@ limit 1
       itemName: sale.itemname,
       totalSales: sale.totalsales,
       count: sale.cnt,
+      uom: sale.unitname,
     }));
 
     console.log(result, "result for jamunadas getTopTenCustomerMonth");
@@ -804,7 +814,6 @@ limit 1
   }
 }
 
-
 export async function getTopItemsWeek(req, res) {
   const pool = getJDASConnectionPool();
 
@@ -812,63 +821,99 @@ export async function getTopItemsWeek(req, res) {
     const { selectedCompany, selectedYear, selectMonths, type, valueType } =
       req.query;
 
-    console.log(
-      selectedCompany,
-      selectedYear,
-      "req.query for getTopItemsWeek",
-    );
+    console.log(selectedCompany, selectedYear, "req.query for getTopItemsWeek");
 
     const result = await pool.query(
       `
-select a.* from 
-(select f.payperiod,d.finyr,e.compcode,g.itemname,sum((round(((a.netamt*((b.amount/a.gramt)*100))/100),2))) as totalsales,
-case when ? = 'quantity' then sum(b.delqty) else sum(a.netamt) end cnt
-from gtsalesinv a
-join gtsalesinvdet b on b.gtsalesinvid = a.gtsalesinvid
-join gtcompmast e on e.gtcompmastid = a.compcode
-join gtfinancialyear d on d.gtfinancialyearid = a.finyear
-join hrmfrq f on f.gtfinancialyearid = d.gtfinancialyearid and (a.docdate between f.mstdt and f.mendt)
-join dtitemmast g on g.dtitemmastid = b.itemname
-where e.compcode = ? AND d.finyr = ?  AND f.payperiod= ? 
-  AND (? = 'quantity' OR ? = 'value')
-  AND (
-          ? = 'ALL'
-          OR (
-            ? = 'B2B'
-            AND a.gstno IS NOT NULL
-            AND TRIM(a.gstno) <> ''
-          )
-          OR (
-            ? = 'B2C'
-            AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
-          )
-        )
-group by f.payperiod,d.finyr,e.compcode,g.itemname
-) a
-order by a.totalsales desc  
-limit 1
+SELECT *
+FROM (
+  SELECT
+    DATE_ADD(DATE_FORMAT(a.docdate,'%Y-%m-01'),
+             INTERVAL FLOOR((DAY(a.docdate)-1)/7)*7 DAY) AS weekstartdate,
 
-      `,
+    LEAST(
+      LAST_DAY(a.docdate),
+      DATE_ADD(
+        DATE_ADD(DATE_FORMAT(a.docdate,'%Y-%m-01'),
+        INTERVAL FLOOR((DAY(a.docdate)-1)/7)*7 DAY),
+      INTERVAL 6 DAY)
+    ) AS weekenddate,
+
+    d.finyr,
+    e.compcode,
+    g.itemname,
+
+    SUM(ROUND(((a.netamt*((b.amount/a.gramt)*100))/100),2)) AS totalsales,
+    g2.unitname,
+CASE
+      WHEN ? = 'quantity' THEN SUM(b.delqty)
+      ELSE SUM(a.netamt)
+    END AS cnt,
+   ROW_NUMBER() OVER (
+           PARTITION BY FLOOR((DAY(a.docdate)-1)/7)
+            ORDER BY
+                CASE
+                    WHEN ? = 'quantity' THEN SUM(b.delqty)
+                    ELSE SUM(ROUND(((a.netamt*((b.amount/a.gramt)*100))/100),2))
+                END DESC
+        ) AS rn
+    
+
+  FROM gtsalesinv a
+  JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+  JOIN gtcompmast e ON e.gtcompmastid = a.compcode
+  JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+  JOIN gtunitmast g2 ON g2.gtunitmastid = b.uom
+  JOIN hrmfrq f 
+    ON f.gtfinancialyearid = d.gtfinancialyearid
+    AND f.payperiod = ?
+  JOIN dtitemmast g ON g.dtitemmastid = b.itemname
+
+  WHERE e.compcode = ?
+    AND a.docdate BETWEEN f.mstdt AND f.mendt
+    AND (
+      ? = 'ALL'
+      OR (? = 'B2B' AND a.gstno IS NOT NULL AND TRIM(a.gstno) <> '')
+      OR (? = 'B2C' AND (a.gstno IS NULL OR TRIM(a.gstno) = ''))
+    )
+
+  GROUP BY
+    FLOOR((DAY(a.docdate)-1)/7),
+    weekstartdate,
+    weekenddate,
+    d.finyr,
+    e.compcode,
+    g.itemname
+   
+
+) X
+WHERE rn = 1
+  
+
+ORDER BY weekstartdate;
+`,
       [
-        valueType,
-        selectedCompany,
-        selectedYear,
-        selectMonths,
-        valueType, // (?='quantity')
-        valueType,
-        type,
-        type,
-        type,
-      ], // ✅ positional params
+        valueType, // CASE WHEN ? = 'quantity'
+        valueType, // CASE WHEN ? = 'quantity'
+        selectMonths, // f.payperiod
+        selectedCompany, // compcode
+
+        type, // ? = 'ALL'
+        type, // ? = 'B2B'
+        type, // ? = 'B2C'
+      ],
     );
 
     const resp = result.map((sale) => ({
+      weekStartDate: sale.weekstartdate,
+      weekEndDate: sale.weekenddate,
       salesYear: sale.finyr,
       salesMonth: sale.payperiod,
       company: sale.compcode,
       itemName: sale.itemname,
       totalSales: sale.totalsales,
       count: sale.cnt,
+      uom: sale.unitname,
     }));
 
     console.log(result, "result for jamunadas getTopItemsWeek");

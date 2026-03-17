@@ -31,11 +31,17 @@ const TopWeekSales = ({
   const [showTable, setShowTable] = useState(false);
   const [tableParams, setTableParams] = useState(null);
   const [selectedYear, setSelectedYear] = useState(yearFilter || "");
-  const [selectedfilterType, setSelectedFilterType] = useState(filterType || "ALL");
+  const [selectedfilterType, setSelectedFilterType] = useState(
+    filterType || "ALL",
+  );
   const [valueType, setValueType] = useState("value");
 
-  useEffect(() => { setSelectedYear(yearFilter); }, [yearFilter]);
-  useEffect(() => { setSelectedFilterType(filterType); }, [filterType]);
+  useEffect(() => {
+    setSelectedYear(yearFilter);
+  }, [yearFilter]);
+  useEffect(() => {
+    setSelectedFilterType(filterType);
+  }, [filterType]);
 
   const formatINR = (value) =>
     `₹ ${Number(value).toLocaleString("en-IN", {
@@ -52,7 +58,11 @@ const TopWeekSales = ({
   const formatLabel = (value) =>
     valueType === "value" ? formatINR(value) : formatQty(value);
 
-  const { data: response, isFetching, isLoading } = useGetTopItemWeekQuery(
+  const {
+    data: response,
+    isFetching,
+    isLoading,
+  } = useGetTopItemWeekQuery(
     {
       params: {
         selectedYear,
@@ -76,14 +86,9 @@ const TopWeekSales = ({
       salesMonth: item.salesMonth,
       company: item.company,
       salesYear: item.salesYear,
+      uom: item.uom,
+
       // Gradient blue shades per bar
-      color: {
-        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-        stops: [
-          [0, "#1976d2"],
-          [1, "rgba(25, 118, 210, 0.25)"],
-        ],
-      },
     }));
   }, [response, valueType]);
 
@@ -99,95 +104,111 @@ const TopWeekSales = ({
   }, []);
 
   /* ---------- Chart options ---------- */
-  const options = useMemo(() => ({
-    chart: {
-      type: "column",
-      height: 380,
-      backgroundColor: "#ffffff",
-      style: { fontFamily: "inherit" },
-    },
-
-    title: { text: null },
-    credits: { enabled: false },
-
-    xAxis: {
-      categories: chartData.map((d) => d.name),
-      title: { text: "Week", style: { fontSize: "12px" } },
-      labels: { style: { fontSize: "12px", fontWeight: "600" } },
-      lineColor: "#e0e0e0",
-      tickColor: "#e0e0e0",
-    },
-
-    yAxis: {
-      min: 0,
-      title: {
-        text: valueType === "value" ? "Sales Value (₹)" : "Quantity",
-        style: { fontSize: "12px" },
+  const options = useMemo(
+    () => ({
+      chart: {
+        type: "column",
+        height: 380,
+        backgroundColor: "#ffffff",
+        style: { fontFamily: "inherit" },
       },
-      gridLineColor: "#f0f0f0",
-      labels: { enabled: false },
-    },
 
-    tooltip: {
-      useHTML: true,
-      formatter() {
-        return `
+      title: { text: null },
+      credits: { enabled: false },
+
+      xAxis: {
+        categories: chartData.map((d) => d.name),
+        title: { text: "Week", style: { fontSize: "12px" } },
+        labels: { style: { fontSize: "12px", fontWeight: "600" } },
+        lineColor: "#e0e0e0",
+        tickColor: "#e0e0e0",
+      },
+
+      yAxis: {
+        min: 0,
+        title: {
+          text: valueType === "value" ? "Sales Value (₹)" : "Quantity",
+          style: { fontSize: "12px" },
+        },
+        gridLineColor: "#f0f0f0",
+        labels: { enabled: false },
+      },
+
+      tooltip: {
+        useHTML: true,
+        formatter() {
+          return `
           <div style="padding:4px 8px;">
             <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${this.point.name}</div>
-            ${this.point.itemName
-              ? `<div style="font-size:11px; color:#666; margin-bottom:2px;">${this.point.itemName}</div>`
-              : ""}
+            ${
+              this.point.itemName
+                ? `<div style="font-size:11px; color:#666; margin-bottom:2px;">${this.point.itemName}</div>`
+                : ""
+            }
             <div style="font-size:13px; color:#1976d2; font-weight:600;">
               ${formatLabel(this.y)}
             </div>
           </div>`;
+        },
+        backgroundColor: "#fff",
+        borderColor: "#e0e0e0",
+        borderRadius: 8,
+        shadow: true,
       },
-      backgroundColor: "#fff",
-      borderColor: "#e0e0e0",
-      borderRadius: 8,
-      shadow: true,
-    },
 
-    plotOptions: {
-      column: {
-        cursor: "pointer",
-        borderRadius: 6,
-        borderWidth: 0,
-        groupPadding: 0.15,
-        pointPadding: 0.1,
-        dataLabels: {
-          enabled: true,
-          useHTML: true,
-          formatter() {
-            return `<span style="font-size:10px; font-weight:700; color:#333;">${formatLabel(this.y)}</span>`;
+      plotOptions: {
+        column: {
+          cursor: "pointer",
+          borderRadius: 6,
+          borderWidth: 0,
+          groupPadding: 0.15,
+          pointPadding: 0.1,
+          dataLabels: {
+            enabled: true,
+            useHTML: true,
+            formatter() {
+              const uom = this.point.options.uom || "";
+
+              return `
+    <span style="font-size:10px; font-weight:700; color:#333;">
+      ${
+        valueType === "quantity"
+          ? `${formatQty(this.y)} ${uom}`
+          : formatINR(this.y)
+      }
+    </span>
+  `;
+            },
+            style: { textOutline: "none" },
           },
-          style: { textOutline: "none" },
-        },
-        states: {
-          hover: {
-            brightness: 0.1,
+          states: {
+            hover: {
+              brightness: 0.1,
+            },
           },
-        },
-        point: {
-          events: {
-            click() {
-              handleOpenTable(this);
+          point: {
+            events: {
+              click() {
+                handleOpenTable(this);
+              },
             },
           },
         },
       },
-    },
 
-    series: [
-      {
-        name: valueType === "value" ? "Sales" : "Quantity",
-        data: chartData,
-        showInLegend: false,
-      },
-    ],
+      series: [
+        {
+          name: valueType === "value" ? "Sales" : "Quantity",
+          data: chartData,
+          showInLegend: false,
+          colorByPoint: true, // ✅ MAGIC LINE
+        },
+      ],
 
-    legend: { enabled: false },
-  }), [chartData, valueType, handleOpenTable]);
+      legend: { enabled: false },
+    }),
+    [chartData, valueType, handleOpenTable],
+  );
 
   return (
     <Card sx={{ backgroundColor: "#f5f5f5", mt: 1, ml: 1 }}>
@@ -221,7 +242,8 @@ const TopWeekSales = ({
                     "& .MuiFormControlLabel-label": {
                       fontSize: "0.78rem",
                       fontWeight: valueType === "value" ? 600 : 400,
-                      color: valueType === "value" ? "#1976d2" : "text.secondary",
+                      color:
+                        valueType === "value" ? "#1976d2" : "text.secondary",
                     },
                     mr: 1.5,
                   }}
@@ -243,7 +265,8 @@ const TopWeekSales = ({
                     "& .MuiFormControlLabel-label": {
                       fontSize: "0.78rem",
                       fontWeight: valueType === "quantity" ? 600 : 400,
-                      color: valueType === "quantity" ? "#1976d2" : "text.secondary",
+                      color:
+                        valueType === "quantity" ? "#1976d2" : "text.secondary",
                     },
                     mr: 0,
                   }}
@@ -300,23 +323,40 @@ const TopWeekSales = ({
 
         {/* Column chart */}
         {/* {chartData.length > 0 && ( */}
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={options}
-            immutable={false}
-          />
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          immutable={false}
+        />
         {/* )} */}
 
         {/* Empty / prompt states */}
-        {chartData.length === 0 && !isLoading && !isFetching && selectMonths && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 380 }}>
-            <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-              No data available for selected filters.
-            </Typography>
-          </Box>
-        )}
+        {chartData.length === 0 &&
+          !isLoading &&
+          !isFetching &&
+          selectMonths && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 380,
+              }}
+            >
+              <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                No data available for selected filters.
+              </Typography>
+            </Box>
+          )}
         {!selectMonths && !isLoading && !isFetching && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 380 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 380,
+            }}
+          >
             <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
               Please select a month to view week-wise data.
             </Typography>
@@ -330,7 +370,9 @@ const TopWeekSales = ({
           month={tableParams.month}
           item={tableParams.itemName}
           company={tableParams.company}
-          itemOptions={[...new Set(chartData.map((d) => d.itemName).filter(Boolean))]}
+          itemOptions={[
+            ...new Set(chartData.map((d) => d.itemName).filter(Boolean)),
+          ]}
           setSelectedYear={setSelectedYear}
           selectedYear={selectedYear}
           finYrData={finYrData}

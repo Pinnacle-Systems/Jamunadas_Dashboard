@@ -90,6 +90,7 @@ const TopMonthSales = ({
       salesMonth: item.salesMonth,
       company: item.company,
       salesYear: item.salesYear,
+      uom: item.uom,
     };
   }, [response, valueType]);
 
@@ -180,7 +181,9 @@ const TopMonthSales = ({
             y: -44,
             formatter() {
               const val =
-                valueType === "value" ? formatINR(this.y) : formatQty(this.y);
+                valueType === "value"
+                  ? formatINR(this.y)
+                  : `${formatQty(this.y)} ${itemData?.uom || ""}`;
               return `
                 <div style="text-align:center;">
                   <div style="
@@ -299,8 +302,6 @@ const TopMonthSales = ({
           alignItems: "center",
           justifyContent: "center",
           pt: 2,
-           
-          
         }}
       >
         {(isLoading || isFetching) && (
@@ -390,11 +391,14 @@ const TopMonthSales = ({
             setTableParams(null);
             setSelectedYear(yearFilter);
             setSelectedFilterType(filterType);
+            setValueType("value")
           }}
           selectMonths={selectMonths}
           setSelectMonths={setSelectMonths}
           selectedfilterType={selectedfilterType}
           setSelectedFilterType={setSelectedFilterType}
+          valueType={valueType}
+          setValueType={setValueType}
         />
       )}
     </Card>

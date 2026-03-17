@@ -795,3 +795,154 @@ select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
         res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
     }
 }
+
+
+
+
+// Highest
+
+
+export async function getTopItemSalesMonthTable(req, res) {
+    const pool = getJDASConnectionPool();
+
+    try {
+        const { companyName, finYear, item, month, type, valueType } = req.query;
+
+        console.log(companyName, "req.query for getTopTenItemSalesMonthTable")
+
+        const result = await pool.query(
+            `
+ 
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,g.itemname,h.color ,
+      i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+(round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
+      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
+      join dtitemmast g on g.dtitemmastid = b.itemname 
+      join gtcolormast h on h.gtcolormastid  = b.color 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+      where c.compcode = ?
+        AND d.finyr = ? AND g.itemname = ? AND e.payperiod  = ?
+          AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
+
+
+      `,
+            [companyName, finYear, item, month, type, type, type]
+
+        );
+
+        const resp = result.map((sale) => ({
+            month: sale.payperiod,
+            company: sale.compcode,
+            finYear: sale.finyr,
+            docId: sale.docid,
+            docDate: sale.docdate,
+            salesType: sale.salestype,
+            customer: sale.customer,
+            itemName: sale.itemname,
+            invoiceQty: sale.invqty,
+            rate: sale.rate,
+            amount: sale.amount,
+            uom: sale.uom
+
+
+
+        }));
+
+        console.log(result, "result for jamunadas getTopTenItemSalesMonthTable");
+        console.log(resp, "resp for jamunadas getTopTenItemSalesMonthTable");
+
+
+        return res.json({ statusCode: 0, data: resp });
+    } catch (err) {
+        console.error("Error retrieving data:", err);
+        res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
+    }
+}
+
+export async function getTopItemSalesWeekTable(req, res) {
+    const pool = getJDASConnectionPool();
+
+    try {
+        const { companyName, item, type } = req.query;
+
+        console.log(companyName, "req.query for getTopTenItemSalesWeekTable")
+
+        const result = await pool.query(
+            `
+ 
+
+select e.payperiod,c.compcode,d.finyr,a.docid ,a.docdate,a.salestype,a.customer,
+      g.itemname,h.color ,i.sizename ,g2.unitname uom ,b.invqty,round(b.amount/b.invqty,2) rate  ,
+      (round(((a.netamt*((b.amount/a.gramt)*100))/100),2)) amount      from gtsalesinv a
+      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast c ON c.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e ON e.gtfinancialyearid = d.gtfinancialyearid AND a.docdate BETWEEN e.mstdt AND e.mendt
+      join dtitemmast g on g.dtitemmastid = b.itemname
+      join gtcolormast h on h.gtcolormastid  = b.color 
+      join sizemast i on i.sizemastid = b.sizes
+            join gtunitmast g2 on g2.gtunitmastid  = b.uom 
+      where c.compcode = ? AND g.itemname = ?
+        AND (
+      ? = 'ALL'
+      OR (
+        ? = 'B2B'
+        AND a.gstno IS NOT NULL
+        AND TRIM(a.gstno) <> ''
+      )
+      OR (
+        ? = 'B2C'
+        AND (a.gstno IS NULL OR TRIM(a.gstno) = '')
+      )
+    )
+      AND a.docdate between DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) and CURRENT_DATE
+    
+
+      `,
+            [companyName, item, type, type, type]   // ✅ positional params
+
+        );
+
+        const resp = result.map((sale) => ({
+            month: sale.payperiod,
+            company: sale.compcode,
+            finYear: sale.finyr,
+            docId: sale.docid,
+            docDate: sale.docdate,
+            salesType: sale.salestype,
+            customer: sale.customer,
+            itemName: sale.itemname,
+            invoiceQty: sale.invqty,
+            rate: sale.rate,
+            amount: sale.amount,
+            uom: sale.uom
+
+
+
+        }));
+
+        console.log(result, "result for jamunadas getTopTenItemSalesWeekTable");
+        console.log(resp, "resp for jamunadas getTopTenItemSalesWeekTable");
+
+
+        return res.json({ statusCode: 0, data: resp });
+    } catch (err) {
+        console.error("Error retrieving data:", err);
+        res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
+    }
+}
