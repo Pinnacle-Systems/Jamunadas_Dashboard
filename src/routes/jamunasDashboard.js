@@ -27,7 +27,7 @@ import {
   getTopTenCustomerSalesWeekTable,
   getTopTenCustomerSalesdailyTable,
   getTopTenItemSalesWeekTable,
-  getTopTenItemSalesdailyTable,
+  getTopTenItemSalesdailyTable,getTopItemSalesWeekTable
 
 } from "../services/jamunasDashboardTable.service.js";
 
@@ -59,5 +59,6 @@ router.get("/topTenItemWeekTable", getTopTenItemSalesWeekTable);
 router.get("/topTenItemDailyTable", getTopTenItemSalesdailyTable);
 router.get("/topItemMonth", getTopItemMonth);
 router.get("/topItemWeek", getTopItemsWeek);
+router.get("/topItemWeekTable", getTopItemSalesWeekTable);
 
 export default router;

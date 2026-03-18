@@ -303,7 +303,7 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
           />
         </Grid>
       </Grid>
-      <Grid container>
+      {/* <Grid container>
         <Grid item xs={12} md={12}>
           <SlowMovement
             finYrData={finYrData}
@@ -315,7 +315,7 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
           />
         </Grid>
       
-      </Grid>
+      </Grid> */}
     </>
   );
 };

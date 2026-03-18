@@ -19,9 +19,6 @@ const UOM_DECIMALS = {
   KGS: 3,
 };
 
-
-
-
 export const formatQtyByUOM = (qty, uom) => {
   if (qty === null || qty === undefined) return "-";
 
@@ -29,8 +26,6 @@ export const formatQtyByUOM = (qty, uom) => {
 
   return Number(qty).toFixed(decimals);
 };
-
-
 
 export const getExcelQtyFormatByUOM = (uom) => {
   const decimals = UOM_DECIMALS[uom?.toUpperCase()] ?? 2;
@@ -40,8 +35,6 @@ export const getExcelQtyFormatByUOM = (uom) => {
 
   return `#,##,##0.${"0".repeat(decimals)}`;
 };
-
-
 
 export const addInsightsRow = ({
   worksheet,
@@ -155,7 +148,7 @@ export const addInsightsfreelookRow = ({
     `Month :  ${selectedMonth || ""}   |   ` +
     `Fabric category :  ${category || ""}  |   ` +
     (selectedDate ? `Date : ${selectedDate}   ` : "") +
-    (selectState ? `State : ${selectState}    ` : "")
+    (selectState ? `State : ${selectState}    ` : "");
   // Insert insights row
   worksheet.insertRow(startRow, [insightText]);
 
@@ -189,23 +182,18 @@ export const addInsightsRowTurnOver = ({
   secondDynamicField,
   seconddynamicValue,
   thirdDynamicField,
-  thirdDynamicValue
-
+  thirdDynamicValue,
+  disableWeek,
+  fourthDynamicField,
+  fourthDynamicValue,
 }) => {
-
-
-
   const insightText =
     `${thirdDynamicField ? `${thirdDynamicField}: ${thirdDynamicValue}    |    ` : ""}` +
-
     `${disableFinYear ? "" : `FinYear :  ${selectedYear}    |    `}` +
     `Comp Code :  ${localCompany}    |    ` +
-    // `${dynamicField} :  ${dynamicValue}    |    ` +
     `${dynamicField ? `${dynamicField}: ${dynamicValue}    |    ` : ""}` +
+    `${disableWeek ? "" : `${fourthDynamicField} :  ${fourthDynamicValue}    |    `}` +
     `${secondDynamicField ? `${secondDynamicField}: ${seconddynamicValue}    |    ` : ""}`;
-
-
-
 
   // Insert insights row
   worksheet.insertRow(startRow, [insightText]);
@@ -268,13 +256,13 @@ export function findDateInRange(fromDate, toDate, checkDate) {
 
 export function latestExpireDateWithinNDays(
   latesExpireDate = secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "latestActivePlanExpireDate"
+    sessionStorage.getItem("sessionId") + "latestActivePlanExpireDate",
   ),
-  n = 20
+  n = 20,
 ) {
   if (
     differenceInTimeToInDays(
-      differenceInTime(new Date(latesExpireDate), new Date())
+      differenceInTime(new Date(latesExpireDate), new Date()),
     ) <= n
   ) {
     return true;
@@ -321,28 +309,30 @@ export function hasPermission(permission) {
   if (
     Boolean(
       secureLocalStorage.getItem(
-        sessionStorage.getItem("sessionId") + "superAdmin"
-      )
+        sessionStorage.getItem("sessionId") + "superAdmin",
+      ),
     )
   ) {
     return true;
   }
   return JSON.parse(
-    secureLocalStorage.getItem(sessionStorage.getItem("sessionId") + "userRole")
+    secureLocalStorage.getItem(
+      sessionStorage.getItem("sessionId") + "userRole",
+    ),
   ).role.RoleOnPage.find(
     (item) =>
       item.pageId ===
       parseInt(
         secureLocalStorage.getItem(
-          sessionStorage.getItem("sessionId") + "currentPage"
-        )
-      )
+          sessionStorage.getItem("sessionId") + "currentPage",
+        ),
+      ),
   )[permission];
 }
 
 export function getYearShortCode(fromDate, toDate) {
   return `${new Date(fromDate).getFullYear().toString().slice(2)}-${new Date(
-    toDate
+    toDate,
   )
     .getFullYear()
     .toString()
@@ -506,7 +496,7 @@ export function getAllowableReturnQty(inwardedQty, returnedQty, stockQty) {
     returnedQty,
     "returnedQty",
     stockQty,
-    "stockQty"
+    "stockQty",
   );
   let balanceReturnQty = parseFloat(inwardedQty) + parseFloat(returnedQty);
   console.log(
@@ -514,7 +504,7 @@ export function getAllowableReturnQty(inwardedQty, returnedQty, stockQty) {
     "balanceReturnQty",
     balanceReturnQty,
     "stockQty",
-    stockQty
+    stockQty,
   );
   return balanceReturnQty < parseFloat(stockQty)
     ? balanceReturnQty
@@ -559,40 +549,40 @@ export function filterGodown(store, itemShortCode) {
 
 export const params = {
   companyId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userCompanyId"
+    sessionStorage.getItem("sessionId") + "userCompanyId",
   ),
   branchId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "currentBranchId"
+    sessionStorage.getItem("sessionId") + "currentBranchId",
   ),
   userId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userId"
+    sessionStorage.getItem("sessionId") + "userId",
   ),
   finYearId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "currentFinYear"
+    sessionStorage.getItem("sessionId") + "currentFinYear",
   ),
 };
 
 export const getCommonParams = () => ({
   companyId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userCompanyId"
+    sessionStorage.getItem("sessionId") + "userCompanyId",
   ),
   branchId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "currentBranchId"
+    sessionStorage.getItem("sessionId") + "currentBranchId",
   ),
   userId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userId"
+    sessionStorage.getItem("sessionId") + "userId",
   ),
   finYearId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "currentFinYear"
+    sessionStorage.getItem("sessionId") + "currentFinYear",
   ),
   isSuperAdmin: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "superAdmin"
+    sessionStorage.getItem("sessionId") + "superAdmin",
   ),
   employeeId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "employeeId"
+    sessionStorage.getItem("sessionId") + "employeeId",
   ),
   roleId: secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "roleId"
+    sessionStorage.getItem("sessionId") + "roleId",
   ),
 });
 
@@ -603,13 +593,13 @@ export function convertSpaceToUnderScore(str) {
 export function isGridDatasValid(
   datas,
   isRequiredAllData,
-  mandatoryFields = []
+  mandatoryFields = [],
 ) {
   if (isRequiredAllData) {
     let gridDatasValid = datas.every((obj) =>
       Object.values(obj).every(
-        (value) => value !== "" && value !== null && value !== 0
-      )
+        (value) => value !== "" && value !== null && value !== 0,
+      ),
     );
     return gridDatasValid;
   } else {
@@ -619,8 +609,8 @@ export function isGridDatasValid(
           obj[field] &&
           obj[field] !== "" &&
           obj[field] !== null &&
-          parseFloat(obj[field]) !== 0
-      )
+          parseFloat(obj[field]) !== 0,
+      ),
     );
     return gridDatasValid;
   }
@@ -636,13 +626,13 @@ export const groupBy = function (xs, key) {
 export function sumArray(arr, property) {
   return arr?.reduce(
     (total, current) => parseFloat(total) + parseFloat(current[property]),
-    0
+    0,
   );
 }
 
 export function getBalanceBillQty(inwardQty, returnQty, alreadyBilledQty) {
   return substract(substract(inwardQty, returnQty), alreadyBilledQty).toFixed(
-    3
+    3,
   );
 }
 
@@ -842,12 +832,12 @@ export const DropdownNew = ({
   const options = [
     ...(clear
       ? [
-        {
-          value: "",
-          label: `Select ${name || placeholder || "Option"}`,
-          isDisabled: false,
-        },
-      ]
+          {
+            value: "",
+            label: `Select ${name || placeholder || "Option"}`,
+            isDisabled: false,
+          },
+        ]
       : []),
     ...(dataList?.map((item) => ({
       value: otherValue ? item?.[otherValue] : item?.id,
@@ -879,10 +869,11 @@ export const DropdownNew = ({
         menuShouldScrollIntoView={false}
         maxMenuHeight={170}
         onInputChange={(value) => value.toUpperCase()}
-        className={`w-full text-xs rounded-lg border ${autoFocus
-          ? " border border-blue-800 ring-1"
-          : "border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          } 
+        className={`w-full text-xs rounded-lg border ${
+          autoFocus
+            ? " border border-blue-800 ring-1"
+            : "border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        } 
           
           transition-all duration-150 shadow-sm`}
         placeholder={placeholder}
@@ -1136,17 +1127,17 @@ export const handleOnChange = (event, setValue) => {
 
   setValue(
     valueBeforeCursor +
-    inputValue.slice(inputSelectionStart, inputSelectionEnd) +
-    valueAfterCursor
+      inputValue.slice(inputSelectionStart, inputSelectionEnd) +
+      valueAfterCursor,
   );
 
   // Set the cursor position to the end of the input value
   setTimeout(() => {
     event.target.setSelectionRange(
       valueBeforeCursor.length +
-      inputValue.slice(inputSelectionStart, inputSelectionEnd).length,
+        inputValue.slice(inputSelectionStart, inputSelectionEnd).length,
       valueBeforeCursor.length +
-      inputValue.slice(inputSelectionStart, inputSelectionEnd).length
+        inputValue.slice(inputSelectionStart, inputSelectionEnd).length,
     );
   });
 };
@@ -1222,7 +1213,8 @@ export function ReusableInput({
             disabled={disabled}
             className={`w-full px-2 py-1 text-xs border border-slate-300 rounded-md 
               focus:border-indigo-300 focus:outline-none transition-all duration-200
-              hover:border-slate-400 ${readOnly || disabled ? "bg-slate-100" : ""
+              hover:border-slate-400 ${
+                readOnly || disabled ? "bg-slate-100" : ""
               } ${className}`}
             autoFocus={autoFocus}
           />
@@ -1246,7 +1238,8 @@ export function ReusableInput({
           disabled={disabled}
           className={`w-full px-2 py-1 text-xs border border-slate-300 rounded-md 
             focus:border-indigo-300 focus:outline-none transition-all duration-200
-            hover:border-slate-400 ${readOnly || disabled ? "bg-slate-100" : ""
+            hover:border-slate-400 ${
+              readOnly || disabled ? "bg-slate-100" : ""
             } ${className}`}
           autoFocus={autoFocus}
         />
@@ -1270,7 +1263,7 @@ export const DateInput = forwardRef(
       inputHead = null,
       autoFocus,
     },
-    ref
+    ref,
   ) => {
     return (
       <div className="flex flex-col gap-1 w-full">
@@ -1297,10 +1290,11 @@ export const DateInput = forwardRef(
          w-[120px] px-2 py-0.5 text-xs text-[12px] h-6 border input-font border-gray-300 rounded-lg
           ring-1 border-blue-800
           transition-all duration-150 shadow-sm
-            ${readOnly
+            ${
+              readOnly
                 ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                 : "bg-white"
-              }
+            }
             ${disabled ? "opacity-50 bg-gray-100 cursor-not-allowed" : ""}
             ${inputClass}
           `}
@@ -1308,7 +1302,7 @@ export const DateInput = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );
 
 export const customStyles = {

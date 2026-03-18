@@ -359,6 +359,19 @@ const JamunasDashboard = createApi({
       },
       providesTags: ["JamunasDashboard"],
     }),
+    getTopItemWeekTable: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/topItemWeekTable",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
   }),
 });
 
@@ -388,7 +401,8 @@ export const {
   useGetTopTenItemWeekTableQuery,
   useGetTopTenItemDailyTableQuery,
   useGetTopItemMonthQuery,
-  useGetTopItemWeekQuery
+  useGetTopItemWeekQuery,
+  useGetTopItemWeekTableQuery
 } = JamunasDashboard;
 
 export default JamunasDashboard;

@@ -176,7 +176,7 @@ const TopMonthTable = ({
     );
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(
-      "Top Ten Item Month Wise Sales Report",
+      "Top Item in Month  Sales Report",
     );
     worksheet.columns = [
       { header: "Item Name", key: "itemName", width: 50 },
@@ -195,7 +195,7 @@ const TopMonthTable = ({
     ];
 
     /* ================= TITLE ================= */
-    worksheet.insertRow(1, ["Top Ten Item Month Wise Sales Report"]);
+    worksheet.insertRow(1, ["Top Item in Month Wise  Report"]);
     worksheet.mergeCells("A1:J1");
 
     const titleCell = worksheet.getCell("A1");
@@ -357,7 +357,7 @@ const TopMonthTable = ({
       new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      "Top Ten Item Month Wise Sales Report.xlsx",
+      "Top Item in  Month Sales Report.xlsx",
     );
   };
 
@@ -367,7 +367,7 @@ const TopMonthTable = ({
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <h2 className="font-bold uppercase">
-            Top Item Month -{" "}
+            Top Item Month Sales-{" "}
             <span className="text-blue-600 ">{localCompany || ""}</span>
           </h2>
 
@@ -466,7 +466,7 @@ const TopMonthTable = ({
                   <option value="HVM">HVM</option>
                 </select>
               </div>
-              <div className="w-32">
+              {/* <div className="w-32">
                 <select
                   value={valueType}
                   onChange={(e) => {
@@ -481,7 +481,7 @@ const TopMonthTable = ({
                   <option value="value">Value</option>
                   <option value="quantity">Quantity</option>
                 </select>
-              </div>
+              </div> */}
               <div className="w-72">
                 <select
                   value={itemName}
@@ -509,22 +509,14 @@ const TopMonthTable = ({
         </div>
 
         {/* TOTAL */}
-        {/* <p className="text-xs font-semibold  text-gray-600">
+        <p className="text-xs font-semibold  text-gray-600">
           Total amount :{" "}
           {new Intl.NumberFormat("en-IN", {
             style: "currency",
             currency: "INR",
           }).format(totalTurnOver)}
-        </p> */}
-        <p className="text-xs font-semibold text-gray-600">
-          {valueType === "quantity" ? "Total Quantity :" : "Total Amount :"}{" "}
-          {valueType === "quantity"
-            ? formatQtyByUOM(totalQty, filteredData?.[0]?.uom)
-            : new Intl.NumberFormat("en-IN", {
-                style: "currency",
-                currency: "INR",
-              }).format(totalTurnOver)}
         </p>
+     
         {/* SEARCH */}
 
         <div className="flex justify-between items-start mt-2">

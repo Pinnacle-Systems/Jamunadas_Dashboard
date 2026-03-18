@@ -789,8 +789,7 @@ limit 1
         type,
         type,
         valueType,
-        valueType
-        
+        valueType,
       ], // ✅ positional params
     );
 
@@ -826,20 +825,40 @@ export async function getTopItemsWeek(req, res) {
     const result = await pool.query(
       `
 SELECT *
+FROM
+(
+SELECT
+    CONCAT('WEEK ', DENSE_RANK() OVER (ORDER BY weekstartdate)) AS week,
+    weekstartdate,
+    weekenddate,
+    finyr,
+    compcode,
+    itemname,
+    totalsales,
+    payperiod,
+    cnt,
+    ROW_NUMBER() OVER (
+        PARTITION BY weekstartdate
+        ORDER BY totalsales DESC
+    ) AS rn
 FROM (
   SELECT
     DATE_ADD(DATE_FORMAT(a.docdate,'%Y-%m-01'),
              INTERVAL FLOOR((DAY(a.docdate)-1)/7)*7 DAY) AS weekstartdate,
 
-    LEAST(
-      LAST_DAY(a.docdate),
-      DATE_ADD(
-        DATE_ADD(DATE_FORMAT(a.docdate,'%Y-%m-01'),
-        INTERVAL FLOOR((DAY(a.docdate)-1)/7)*7 DAY),
-      INTERVAL 6 DAY)
-    ) AS weekenddate,
+    DATE_FORMAT(
+  LEAST(
+    LAST_DAY(a.docdate),
+    DATE_ADD(
+      DATE_ADD(DATE_FORMAT(a.docdate,'%Y-%m-01'),
+      INTERVAL FLOOR((DAY(a.docdate)-1)/7)*7 DAY),
+      INTERVAL 6 DAY
+    )
+  ),
+'%Y-%m-%d') AS weekenddate,
 
     d.finyr,
+    f.payperiod,
     e.compcode,
     g.itemname,
 
@@ -877,19 +896,17 @@ CASE
       OR (? = 'B2C' AND (a.gstno IS NULL OR TRIM(a.gstno) = ''))
     )
 
-  GROUP BY
+GROUP BY
     FLOOR((DAY(a.docdate)-1)/7),
     weekstartdate,
     weekenddate,
     d.finyr,
+     f.payperiod,
     e.compcode,
     g.itemname
-   
-
+) Y
 ) X
 WHERE rn = 1
-  
-
 ORDER BY weekstartdate;
 `,
       [
@@ -905,6 +922,7 @@ ORDER BY weekstartdate;
     );
 
     const resp = result.map((sale) => ({
+      weekName: sale.week?.toString(), // ✅ FIX HERE
       weekStartDate: sale.weekstartdate,
       weekEndDate: sale.weekenddate,
       salesYear: sale.finyr,
