@@ -230,23 +230,7 @@ const TopWeekSales = ({
         />
 
         {/* Empty states */}
-        {chartData.length === 0 &&
-          !isLoading &&
-          !isFetching &&
-          selectMonths && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 380,
-              }}
-            >
-              <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-                No data available for selected filters.
-              </Typography>
-            </Box>
-          )}
+
 
         {/* {!selectMonths && !isLoading && !isFetching && (
           <Box

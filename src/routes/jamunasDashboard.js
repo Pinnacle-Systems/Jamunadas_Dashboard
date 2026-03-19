@@ -13,7 +13,7 @@ import {
   getTopTenItemYear,
   getTopTenItemMonth,
   getTopTenItemWeek,
-  getTopTenItemToday,  getTopItemMonth,getTopItemsWeek
+  getTopTenItemToday, getTopItemMonth, getTopItemsWeek, getSlowMovement
 } from "../services/jamunasDashboard.service.js";
 
 import {
@@ -27,7 +27,7 @@ import {
   getTopTenCustomerSalesWeekTable,
   getTopTenCustomerSalesdailyTable,
   getTopTenItemSalesWeekTable,
-  getTopTenItemSalesdailyTable,getTopItemSalesWeekTable
+  getTopTenItemSalesdailyTable, getTopItemSalesWeekTable
 
 } from "../services/jamunasDashboardTable.service.js";
 
@@ -60,5 +60,6 @@ router.get("/topTenItemDailyTable", getTopTenItemSalesdailyTable);
 router.get("/topItemMonth", getTopItemMonth);
 router.get("/topItemWeek", getTopItemsWeek);
 router.get("/topItemWeekTable", getTopItemSalesWeekTable);
+router.get("/slowMovingItems", getSlowMovement);
 
 export default router;

@@ -943,3 +943,58 @@ ORDER BY weekstartdate;
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
+
+
+export async function getSlowMovement(req, res) {
+  const pool = getJDASConnectionPool();
+
+  try {
+    const { selectedCompany, selectedYear } = req.query;
+
+    console.log(selectedCompany, "req.query for getSlowMovement");
+
+    const result = await pool.query(
+      `SELECT 
+  a.docdate,
+  a.finyear,
+    a.itemname, 
+    SUM(a.qty) AS current_stock, 
+    
+    MAX(CASE WHEN a.qty < 0 THEN a.docdate END) AS last_sale_date,
+
+    -- fallback to last movement if no sale
+    DATEDIFF(
+        CURDATE(), 
+        COALESCE(
+            MAX(CASE WHEN a.qty < 0 THEN a.docdate END),
+            MAX(a.docdate)
+        )
+    ) AS ageing
+FROM dtstorestkmast a
+WHERE a.finyear = ?
+GROUP BY a.itemname
+HAVING 
+    current_stock > 0
+    AND ageing > 90
+    limit 100
+
+      `,
+      [selectedYear], // ✅ positional params
+    );
+
+    const resp = result.map((sale) => ({
+      docDate: sale.docdate,
+      salesYear: sale.finyear,
+      aging: sale.ageing,
+      itemName: sale.itemname,
+    }));
+
+    console.log(result, "result for jamunadas getSlowMovement");
+    console.log(resp, "resp for jamunadas getSlowMovement");
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
+  }
+}

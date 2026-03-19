@@ -372,6 +372,19 @@ const JamunasDashboard = createApi({
       },
       providesTags: ["JamunasDashboard"],
     }),
+    getSlowMovingItems: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/slowMovingItems",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
   }),
 });
 
@@ -402,7 +415,8 @@ export const {
   useGetTopTenItemDailyTableQuery,
   useGetTopItemMonthQuery,
   useGetTopItemWeekQuery,
-  useGetTopItemWeekTableQuery
+  useGetTopItemWeekTableQuery,
+  useGetSlowMovingItemsQuery,
 } = JamunasDashboard;
 
 export default JamunasDashboard;
