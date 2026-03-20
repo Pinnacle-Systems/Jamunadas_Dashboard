@@ -385,6 +385,32 @@ const JamunasDashboard = createApi({
       },
       providesTags: ["JamunasDashboard"],
     }),
+    getSlowMovingItemsByVelocity: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/slowMovingItemsByVelocity",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
+    getDeadStock: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/deadStock",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
   }),
 });
 
@@ -417,6 +443,8 @@ export const {
   useGetTopItemWeekQuery,
   useGetTopItemWeekTableQuery,
   useGetSlowMovingItemsQuery,
+  useGetSlowMovingItemsByVelocityQuery,
+  useGetDeadStockQuery
 } = JamunasDashboard;
 
 export default JamunasDashboard;

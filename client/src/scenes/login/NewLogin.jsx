@@ -393,8 +393,7 @@
 
 // export default Login
 
-
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Eye, EyeOff, Lock, User, Zap, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import secureLocalStorage from "react-secure-storage";
@@ -406,7 +405,6 @@ import { generateSessionId } from '../../utils/hleper';
 
 axios.defaults.baseURL = BASE_URL;
 
-/* ─────────────────────────── STYLES ─────────────────────────── */
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Bricolage+Grotesque:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -436,48 +434,6 @@ const css = `
     mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
   }
 
-  /* ── scene: contains card + chips ── */
-  .scene {
-    position: relative;
-    z-index: 10;
-    /* sized to card + gap so chips have room */
-  }
-
-  /* ── orbit chip: absolutely positioned over scene, ALWAYS ON TOP ── */
-  .orbit-chip {
-    position: absolute;
-    z-index: 50;          /* above everything */
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.96);
-    border-radius: 12px;
-    padding: 8px 13px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 18px rgba(99,102,241,0.15), 0 1px 4px rgba(0,0,0,0.07);
-    white-space: nowrap;
-    pointer-events: none;
-    will-change: transform;
-    /* anchor is top-left; we shift by -50% -50% to center on point */
-    transform: translate(-50%, -50%);
-  }
-  .chip-icon { font-size: 18px; line-height: 1; }
-  .chip-name {
-    font-family: 'Clash Display', sans-serif;
-    font-size: 12px; font-weight: 700; color: #1e1b4b;
-  }
-  .chip-desc { font-size: 10px; color: #64748b; }
-
-  /* ── dashed rect orbit track ── */
-  .orbit-track {
-    position: absolute;
-    z-index: 9;
-    border-radius: 32px;
-    border: 1.5px dashed rgba(99,102,241,0.18);
-    pointer-events: none;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  /* ── CARD LAYOUT ── */
   .layout {
     position: relative;
     z-index: 20;
@@ -494,7 +450,6 @@ const css = `
     overflow: hidden;
   }
 
-  /* ── LEFT ── */
   .left-panel {
     background: linear-gradient(148deg, #4f46e5 0%, #6366f1 45%, #06b6d4 100%);
     position: relative; overflow: hidden;
@@ -552,7 +507,6 @@ const css = `
   .fcard-name { font-family:'Clash Display',sans-serif; font-size:13px; font-weight:600; color:#fff; }
   .fcard-desc { font-size:11px; color:rgba(255,255,255,0.56); }
 
-  /* ── RIGHT ── */
   .right-panel {
     background: #fff; padding: 50px 40px;
     display: flex; flex-direction: column; justify-content: center;
@@ -614,20 +568,8 @@ const css = `
     .layout { grid-template-columns:1fr; }
     .left-panel { display:none; }
     .right-panel { padding:36px 24px; }
-    .orbit-chip { display:none; }
-    .orbit-track { display:none; }
   }
 `;
-
-/* ─── data ─────────────────────────────────────────── */
-const products = [
-    { title: 'GMS', desc: 'Garment ERP', icon: '👔', color: '#f59e0b' },
-    { title: 'PMS', desc: 'Payroll System', icon: '💰', color: '#10b981' },
-    { title: 'PCS', desc: 'Production Control', icon: '🏭', color: '#6366f1' },
-    { title: 'POS', desc: 'Retail POS', icon: '🛒', color: '#ef4444' },
-    { title: 'Costing', desc: 'Textile Costing', icon: '🧮', color: '#8b5cf6' },
-    { title: 'Lab', desc: 'LIMS', icon: '🔬', color: '#06b6d4' },
-];
 
 const bgBlobs = [
     { size: 300, top: '-5%', left: '-4%', color: 'rgba(99,102,241,0.08)', dur: 20, dx: 34, dy: 24 },
@@ -642,134 +584,13 @@ const innerCards = [
     { icon: '⚡', label: '99.9% Uptime', sub: 'Always available' },
 ];
 
-/* ─────────────────────────────────────────────────────
-   RECTANGULAR ORBIT LOGIC
-   
-   The "track" is a rectangle with rounded corners.
-   GAP = padding between card edge and chip center path.
-   We parameterize 0→1 around the perimeter clockwise:
-     0    = top-left corner
-     →    top edge  (left to right)
-     →    right edge (top to bottom)
-     →    bottom edge (right to left)
-     →    left edge (bottom to top)
-   Returns { x, y } relative to card center.
-───────────────────────────────────────────────────── */
-const GAP = 52; // px gap from card edge to chip center
-
-function getRectPoint(t, W, H) {
-    // W, H = full track rectangle (card + 2*GAP)
-    const r = 28; // corner radius of track
-    const w = W;
-    const h = H;
-
-    // perimeter segments (ignoring tiny corner arcs for simplicity):
-    const top = w - 2 * r;
-    const right = h - 2 * r;
-    const bottom = w - 2 * r;
-    const left = h - 2 * r;
-    const total = top + right + bottom + left;
-
-    const d = ((t % 1) + 1) % 1; // normalize 0-1
-    const dist = d * total;
-
-    let x, y;
-
-    if (dist < top) {
-        // top edge: left→right
-        const f = dist / top;
-        x = -w / 2 + r + f * top;
-        y = -h / 2;
-    } else if (dist < top + right) {
-        // right edge: top→bottom
-        const f = (dist - top) / right;
-        x = w / 2;
-        y = -h / 2 + r + f * right;
-    } else if (dist < top + right + bottom) {
-        // bottom edge: right→left
-        const f = (dist - top - right) / bottom;
-        x = w / 2 - r - f * bottom;
-        y = h / 2;
-    } else {
-        // left edge: bottom→top
-        const f = (dist - top - right - bottom) / left;
-        x = -w / 2;
-        y = h / 2 - r - f * left;
-    }
-
-    return { x, y };
-}
-
-/* ─── Single orbiting chip ──────────────────────────── */
-const SPEED = 0.000055; // t units per ms → ~18 000 ms / revolution
-
-const OrbitChip = ({ product, index, total, startTime, trackW, trackH }) => {
-    const ref = useRef(null);
-    const raf = useRef(null);
-    const offset = index / total; // stagger evenly around track
-
-    useEffect(() => {
-        if (!ref.current || trackW === 0) return;
-
-        const tick = (now) => {
-            const elapsed = now - startTime;
-            const t = offset + elapsed * SPEED; // clockwise
-            const { x, y } = getRectPoint(t, trackW, trackH);
-            // center chip on the point
-            ref.current.style.left = `${trackW / 2 + x}px`;
-            ref.current.style.top = `${trackH / 2 + y}px`;
-            raf.current = requestAnimationFrame(tick);
-        };
-
-        raf.current = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(raf.current);
-    }, [offset, startTime, trackW, trackH]);
-
-    return (
-        <div
-            ref={ref}
-            className="orbit-chip"
-            style={{ borderLeft: `3px solid ${product.color}` }}
-        >
-            <span className="chip-icon">{product.icon}</span>
-            <div>
-                <div className="chip-name" style={{ color: product.color }}>{product.title}</div>
-                <div className="chip-desc">{product.desc}</div>
-            </div>
-        </div>
-    );
-};
-
-/* ─── Login ─────────────────────────────────────────── */
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [startTime, setStartTime] = useState(0);
-    const [trackSize, setTrackSize] = useState({ w: 0, h: 0 });
-    const cardRef = useRef(null);
-    const sceneRef = useRef(null);
     const navigate = useNavigate();
-
-    /* measure card once mounted to size the track */
-    useEffect(() => {
-        setStartTime(performance.now());
-
-        const measure = () => {
-            if (!cardRef.current) return;
-            const rect = cardRef.current.getBoundingClientRect();
-            setTrackSize({
-                w: rect.width + GAP * 2,
-                h: rect.height + GAP * 2,
-            });
-        };
-
-        measure();
-        window.addEventListener('resize', measure);
-        return () => window.removeEventListener('resize', measure);
-    }, []);
 
     const validate = () => {
         const e = {};
@@ -832,158 +653,124 @@ const Login = () => {
                     />
                 ))}
 
-                {/* ── scene: card + orbit chips live here ── */}
-                <div
-                    ref={sceneRef}
-                    className="scene"
-                    style={{
-                        // scene is exactly track size so chips have proper space
-                        width: trackSize.w || 'auto',
-                        height: trackSize.h || 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
+                <motion.div
+                    className="layout"
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 90, damping: 18, delay: 0.1 }}
                 >
-                    {/* dashed rectangular track */}
-                    {trackSize.w > 0 && (
-                        <div className="orbit-track" style={{ width: trackSize.w, height: trackSize.h }} />
-                    )}
-
-                    {/* chips — absolutely in scene, always z:50 */}
-                    {trackSize.w > 0 && startTime > 0 && products.map((p, i) => (
-                        <OrbitChip
-                            key={p.title}
-                            product={p}
-                            index={i}
-                            total={products.length}
-                            startTime={startTime}
-                            trackW={trackSize.w}
-                            trackH={trackSize.h}
-                        />
-                    ))}
-
-                    {/* ── THE CARD ── */}
-                    <motion.div
-                        ref={cardRef}
-                        className="layout"
-                        initial={{ opacity: 0, scale: 0.97 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 90, damping: 18, delay: 0.1 }}
-                    >
-                        {/* LEFT */}
-                        <div className="left-panel">
-                            <div className="float-cards">
-                                {innerCards.map((c) => (
-                                    <div key={c.label} className="fcard">
-                                        <span style={{ fontSize: 20 }}>{c.icon}</span>
-                                        <div>
-                                            <div className="fcard-name">{c.label}</div>
-                                            <div className="fcard-desc">{c.sub}</div>
-                                        </div>
+                    {/* LEFT */}
+                    <div className="left-panel">
+                        <div className="float-cards">
+                            {innerCards.map((c) => (
+                                <div key={c.label} className="fcard">
+                                    <span style={{ fontSize: 20 }}>{c.icon}</span>
+                                    <div>
+                                        <div className="fcard-name">{c.label}</div>
+                                        <div className="fcard-desc">{c.sub}</div>
                                     </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <motion.div className="brand-block"
+                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: .3 }}>
+                            <motion.div className="brand-logo"
+                                animate={{ rotate: [0, 7, -7, 0] }}
+                                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
+                                <Zap size={22} color="#fde68a" strokeWidth={2.5} />
+                            </motion.div>
+                            <h1 className="brand-headline"><em>Pinnacle</em><br />Systems</h1>
+                            <p className="brand-sub">Enterprise Resource Platform</p>
+                            <div className="stat-row">
+                                {['6 Modules', '99.9% Uptime', 'Multi-Branch'].map((s, i) => (
+                                    <motion.div key={s} className="stat-pill"
+                                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .6 + i * .1 }}>
+                                        <span className="stat-dot" />{s}
+                                    </motion.div>
                                 ))}
                             </div>
+                        </motion.div>
 
-                            <motion.div className="brand-block"
-                                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: .3 }}>
-                                <motion.div className="brand-logo"
-                                    animate={{ rotate: [0, 7, -7, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-                                    <Zap size={22} color="#fde68a" strokeWidth={2.5} />
-                                </motion.div>
-                                <h1 className="brand-headline"><em>Pinnacle</em><br />Systems</h1>
-                                <p className="brand-sub">Enterprise Resource Platform</p>
-                                <div className="stat-row">
-                                    {['6 Modules', '99.9% Uptime', 'Multi-Branch'].map((s, i) => (
-                                        <motion.div key={s} className="stat-pill"
-                                            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .6 + i * .1 }}>
-                                            <span className="stat-dot" />{s}
-                                        </motion.div>
-                                    ))}
+                        <div className="left-footer">
+                            <p>© {new Date().getFullYear()} Pinnacle Systems. All rights reserved.</p>
+                        </div>
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="right-panel">
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: .28 }}>
+                            <p className="form-eyebrow">Welcome back</p>
+                            <h2 className="form-title">Sign in to your<br />account</h2>
+                        </motion.div>
+
+                        <form onSubmit={handleSubmit} noValidate>
+                            <motion.div className="field-row"
+                                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .4 }}>
+                                <label htmlFor="username" className="field-label">Username</label>
+                                <div className="field-wrap">
+                                    <span className="field-icon"><User size={15} /></span>
+                                    <input id="username" type="text" value={username}
+                                        onChange={e => setUsername(e.target.value)}
+                                        placeholder="Enter your username"
+                                        className={`field-input${errors.username ? ' err' : ''}`}
+                                        autoComplete="username"
+                                    />
                                 </div>
+                                <AnimatePresence>
+                                    {errors.username && (
+                                        <motion.p className="field-error"
+                                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                            {errors.username}
+                                        </motion.p>
+                                    )}
+                                </AnimatePresence>
                             </motion.div>
 
-                            <div className="left-footer">
-                                <p>© {new Date().getFullYear()} Pinnacle Systems. All rights reserved.</p>
-                            </div>
-                        </div>
-
-                        {/* RIGHT */}
-                        <div className="right-panel">
-                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: .28 }}>
-                                <p className="form-eyebrow">Welcome back</p>
-                                <h2 className="form-title">Sign in to your<br />account</h2>
-                            </motion.div>
-
-                            <form onSubmit={handleSubmit} noValidate>
-                                <motion.div className="field-row"
-                                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .4 }}>
-                                    <label htmlFor="username" className="field-label">Username</label>
-                                    <div className="field-wrap">
-                                        <span className="field-icon"><User size={15} /></span>
-                                        <input id="username" type="text" value={username}
-                                            onChange={e => setUsername(e.target.value)}
-                                            placeholder="Enter your username"
-                                            className={`field-input${errors.username ? ' err' : ''}`}
-                                            autoComplete="username"
-                                        />
-                                    </div>
-                                    <AnimatePresence>
-                                        {errors.username && (
-                                            <motion.p className="field-error"
-                                                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                                {errors.username}
-                                            </motion.p>
-                                        )}
-                                    </AnimatePresence>
-                                </motion.div>
-
-                                <motion.div className="field-row"
-                                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .48 }}>
-                                    <label htmlFor="password" className="field-label">Password</label>
-                                    <div className="field-wrap">
-                                        <span className="field-icon"><Lock size={15} /></span>
-                                        <input id="password" type={showPassword ? 'text' : 'password'} value={password}
-                                            onChange={e => setPassword(e.target.value)}
-                                            placeholder="Enter your password"
-                                            className={`field-input${errors.password ? ' err' : ''}`}
-                                            style={{ paddingRight: 40 }}
-                                            autoComplete="current-password"
-                                        />
-                                        <button type="button" className="eye-btn" onClick={() => setShowPassword(v => !v)}>
-                                            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                                        </button>
-                                    </div>
-                                    <AnimatePresence>
-                                        {errors.password && (
-                                            <motion.p className="field-error"
-                                                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                                {errors.password}
-                                            </motion.p>
-                                        )}
-                                    </AnimatePresence>
-                                </motion.div>
-
-                                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .56 }}>
-                                    <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                                        {isSubmitting
-                                            ? <><div className="spin" />Authenticating…</>
-                                            : <><span>Sign In to Pinnacle</span><ArrowRight size={16} /></>
-                                        }
+                            <motion.div className="field-row"
+                                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .48 }}>
+                                <label htmlFor="password" className="field-label">Password</label>
+                                <div className="field-wrap">
+                                    <span className="field-icon"><Lock size={15} /></span>
+                                    <input id="password" type={showPassword ? 'text' : 'password'} value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        placeholder="Enter your password"
+                                        className={`field-input${errors.password ? ' err' : ''}`}
+                                        style={{ paddingRight: 40 }}
+                                        autoComplete="current-password"
+                                    />
+                                    <button type="button" className="eye-btn" onClick={() => setShowPassword(v => !v)}>
+                                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                     </button>
-                                </motion.div>
-                            </form>
-
-                            <motion.div className="form-footer"
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .70 }}>
-                                <a href="#">Forgot password?</a>
-                                <span className="dot-sep" />
-                                <a href="#">Create account</a>
+                                </div>
+                                <AnimatePresence>
+                                    {errors.password && (
+                                        <motion.p className="field-error"
+                                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                            {errors.password}
+                                        </motion.p>
+                                    )}
+                                </AnimatePresence>
                             </motion.div>
-                        </div>
-                    </motion.div>
-                </div>
+
+                            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .56 }}>
+                                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                                    {isSubmitting
+                                        ? <><div className="spin" />Authenticating…</>
+                                        : <><span>Sign In to Pinnacle</span><ArrowRight size={16} /></>
+                                    }
+                                </button>
+                            </motion.div>
+                        </form>
+
+                        <motion.div className="form-footer"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .70 }}>
+                            <a href="#">Forgot password?</a>
+                            <span className="dot-sep" />
+                            <a href="#">Create account</a>
+                        </motion.div>
+                    </div>
+                </motion.div>
             </div>
         </>
     );

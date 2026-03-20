@@ -944,7 +944,6 @@ ORDER BY weekstartdate;
   }
 }
 
-
 export async function getSlowMovement(req, res) {
   const pool = getJDASConnectionPool();
 
@@ -971,12 +970,12 @@ export async function getSlowMovement(req, res) {
         )
     ) AS ageing
 FROM dtstorestkmast a
-WHERE a.finyear = ?
+WHERE a.transtype = 'Sales Invoice'
 GROUP BY a.itemname
 HAVING 
     current_stock > 0
-    AND ageing > 90
-    limit 100
+    
+   
 
       `,
       [selectedYear], // ✅ positional params
@@ -996,5 +995,197 @@ HAVING
   } catch (err) {
     console.error("Error retrieving data:", err);
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
+  }
+}
+
+export async function getLowVelocityItems(req, res) {
+  const pool = getJDASConnectionPool();
+
+  try {
+    const { selectedYear } = req.query;
+
+    if (!selectedYear) {
+      return res
+        .status(400)
+        .json({ statusCode: 1, error: "selectedYear is required" });
+    }
+
+    // e.g. selectedYear = "25-26"  →  yearStart = "2025-04-01", yearEnd = "2026-03-31"
+    const yearPrefix = "20" + selectedYear.split("-")[0]; // "2025"
+    const nextYearPrefix = "20" + selectedYear.split("-")[1]; // "2026"
+    const yearStart = `${yearPrefix}-04-01`;
+    const yearEnd = `${nextYearPrefix}-03-31`;
+
+    // Number of days in financial year window (used as denominator for velocity)
+    // DATEDIFF(yearEnd, yearStart) = 364 days for a normal year
+    const query = `
+      SELECT
+          a.itemname,
+ 
+          /* current stock on hand */
+          SUM(a.qty)                                          AS current_stock,
+ 
+          /* movement dates */
+          MAX(a.docdate)                                      AS last_movement_date,
+          MAX(CASE WHEN a.qty < 0 THEN a.docdate END)        AS last_sale_date,
+ 
+          /* ageing: days since last sale or last movement */
+          DATEDIFF(
+            CURDATE(),
+            COALESCE(
+              MAX(CASE WHEN a.qty < 0 THEN a.docdate END),
+              MAX(a.docdate)
+            )
+          )                                                   AS ageing,
+ 
+          /* total qty sold in the financial year */
+          SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) AS total_qty_sold,
+ 
+          /* number of active days = DATEDIFF between first and last movement */
+          NULLIF(DATEDIFF(MAX(a.created_on), MIN(a.created_on)), 0) AS active_days,
+ 
+          /* velocity = total sales / number of days in year window */
+          SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) /
+          NULLIF(
+            DATEDIFF(?, ?),   -- yearEnd, yearStart  (fixed year window)
+            0
+          )                                                   AS velocity,
+ 
+          /* days to clear remaining stock at current velocity */
+          CASE
+            WHEN SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) = 0
+            THEN NULL
+            ELSE
+              SUM(a.qty) /
+              NULLIF(
+                SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) /
+                NULLIF(DATEDIFF(?, ?), 0),
+                0
+              )
+          END                                                 AS daysToClear
+ 
+      FROM dtstorestkmast a
+ 
+      WHERE a.created_on >= ?
+        AND a.created_on <= ?
+ 
+      GROUP BY a.itemname
+ 
+     HAVING current_stock > 0
+   AND total_qty_sold > 0
+   AND velocity IS NOT NULL
+   AND velocity < 0.5
+ 
+      ORDER BY velocity ASC, ageing DESC
+ 
+      LIMIT 100;
+    `;
+
+    // params order matches the ? placeholders above
+    const params = [
+      yearEnd,
+      yearStart, // DATEDIFF for velocity denominator
+      yearEnd,
+      yearStart, // DATEDIFF for daysToClear denominator
+      yearStart,
+      yearEnd, // WHERE created_on range
+    ];
+
+    const result = await pool.query(query, params);
+
+    const resp = result.map((row) => ({
+      itemName: row.itemname,
+      currentStock: Number(row.current_stock) || 0,
+      aging: Number(row.ageing) || 0,
+      lastSaleDate: row.last_sale_date ?? null,
+      lastMovementDate: row.last_movement_date ?? null,
+      totalQtySold: Number(row.total_qty_sold) || 0,
+      activeDays: Number(row.active_days) || 0,
+      velocity: row.velocity
+        ? Number(row.velocity).toFixed(4) // 4dp for precision
+        : "0.0000",
+      daysToClear: row.daysToClear ? Number(row.daysToClear).toFixed(2) : null,
+      deadStockFlag: null, // always null here — these are low velocity, not dead
+    }));
+
+    console.log("getLowVelocityItems resp:", resp.length, "items");
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving low velocity items:", err);
+    return res
+      .status(500)
+      .json({ statusCode: 1, error: "Internal Server Error" });
+  }
+}
+
+export async function getDeadStockItems(req, res) {
+  const pool = getJDASConnectionPool();
+
+  try {
+    const { selectedYear } = req.query;
+
+    if (!selectedYear) {
+      return res
+        .status(400)
+        .json({ statusCode: 1, error: "selectedYear is required" });
+    }
+
+   
+
+    const query = `
+      SELECT
+    a.docdate,
+    a.itemname,
+    a.qty,
+    DATEDIFF(SYSDATE(), a.docdate) AS ageing,
+    a.finyear
+FROM dtstorestkmast a
+JOIN gtfinancialyear d
+    ON d.finyr = a.finyear
+WHERE d.finyr = ?
+  AND a.transtype = 'Purchase Inward'
+  AND (a.itemname, a.docdate) IN (
+        SELECT
+            itemname,
+            MAX(docdate)
+        FROM dtstorestkmast
+        WHERE finyear = ?
+          AND transtype = 'Purchase Inward'
+        GROUP BY itemname
+    )
+  AND a.itemname NOT IN (
+        SELECT itemname
+        FROM dtstorestkmast
+        WHERE finyear = ?
+          AND transtype = 'Sales Invoice'
+    )
+AND DATEDIFF(SYSDATE(), a.docdate) > 90
+ORDER BY a.itemname;
+    `;
+
+    const result = await pool.query(query, [selectedYear,selectedYear,selectedYear]);
+
+    const resp = result.map((row) => ({
+      itemName: row.itemname,
+      // currentStock: Number(row.current_stock) || 0,
+      // aging: Number(row.ageing) || 0,
+      // lastSaleDate: row.last_sale_date ?? null,
+      // lastMovementDate: row.last_movement_date ?? null,
+      // totalQtySold: 0,
+      // activeDays: 0,
+      // velocity: "0.0000",
+      // daysToClear: null,
+      // deadStockFlag: "Dead Stock",
+    }));
+
+    console.log("getDeadStockItems resp:", resp.length, "items");
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving dead stock items:", err);
+    return res
+      .status(500)
+      .json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
