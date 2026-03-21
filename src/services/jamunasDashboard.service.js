@@ -957,6 +957,7 @@ export async function getSlowMovement(req, res) {
   a.docdate,
   a.finyear,
     a.itemname, 
+    a.itemgroup,
     SUM(a.qty) AS current_stock, 
     
     MAX(CASE WHEN a.qty < 0 THEN a.docdate END) AS last_sale_date,
@@ -970,11 +971,11 @@ export async function getSlowMovement(req, res) {
         )
     ) AS ageing
 FROM dtstorestkmast a
-WHERE a.transtype = 'Sales Invoice'
+WHERE a.transtype = 'Sales Invoice'  AND a.finyear = ?
 GROUP BY a.itemname
 HAVING 
     current_stock > 0
-    
+    ORDER BY ageing DESC
    
 
       `,
@@ -984,8 +985,9 @@ HAVING
     const resp = result.map((sale) => ({
       docDate: sale.docdate,
       salesYear: sale.finyear,
-      aging: sale.ageing,
+      aging: sale.ageing ?? 0,
       itemName: sale.itemname,
+      itemGroup: sale.itemgroup,
     }));
 
     console.log(result, "result for jamunadas getSlowMovement");
@@ -1131,52 +1133,31 @@ export async function getDeadStockItems(req, res) {
         .json({ statusCode: 1, error: "selectedYear is required" });
     }
 
-   
-
     const query = `
-      SELECT
-    a.docdate,
-    a.itemname,
-    a.qty,
-    DATEDIFF(SYSDATE(), a.docdate) AS ageing,
-    a.finyear
-FROM dtstorestkmast a
-JOIN gtfinancialyear d
-    ON d.finyr = a.finyear
-WHERE d.finyr = ?
-  AND a.transtype = 'Purchase Inward'
-  AND (a.itemname, a.docdate) IN (
-        SELECT
-            itemname,
-            MAX(docdate)
-        FROM dtstorestkmast
-        WHERE finyear = ?
-          AND transtype = 'Purchase Inward'
-        GROUP BY itemname
-    )
-  AND a.itemname NOT IN (
-        SELECT itemname
-        FROM dtstorestkmast
-        WHERE finyear = ?
-          AND transtype = 'Sales Invoice'
-    )
-AND DATEDIFF(SYSDATE(), a.docdate) > 90
-ORDER BY a.itemname;
+      SELECT DISTINCT a.itemname,a.itemgroup,ROUND(SUM(a.qty), 0) AS total_qty,a.uom,a.rackno,a.supplier,a.docid
+      FROM dtstorestkmast a
+      WHERE a.transtype = 'Purchase Inward'
+        
+        AND a.itemname NOT IN (
+              SELECT itemname
+              FROM dtstorestkmast
+              WHERE transtype = 'Sales Invoice'
+                
+          )
+    GROUP BY a.itemname, a.itemgroup
+ORDER BY a.itemgroup, a.itemname;
     `;
 
-    const result = await pool.query(query, [selectedYear,selectedYear,selectedYear]);
+    const result = await pool.query(query, [selectedYear, selectedYear]);
 
     const resp = result.map((row) => ({
       itemName: row.itemname,
-      // currentStock: Number(row.current_stock) || 0,
-      // aging: Number(row.ageing) || 0,
-      // lastSaleDate: row.last_sale_date ?? null,
-      // lastMovementDate: row.last_movement_date ?? null,
-      // totalQtySold: 0,
-      // activeDays: 0,
-      // velocity: "0.0000",
-      // daysToClear: null,
-      // deadStockFlag: "Dead Stock",
+      itemGroup: row.itemgroup,
+      quantity: row.total_qty,
+      uom: row.uom,
+      supplierName: row.supplier,
+      docId: row.docid,
+      rackNo: row.rackno,
     }));
 
     console.log("getDeadStockItems resp:", resp.length, "items");

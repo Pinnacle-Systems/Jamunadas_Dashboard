@@ -1,14 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  Box,
-  Typography,
-  Chip,
-} from "@mui/material";
+import { Card, CardHeader, CardContent, Box, Typography } from "@mui/material";
 import {
   useGetSlowMovingItemsQuery,
   useGetSlowMovingItemsByVelocityQuery,
@@ -25,12 +18,18 @@ import {
   FaSortAmountUp,
   FaSortAmountDown,
 } from "react-icons/fa";
-
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import {
+  addInsightsRowTurnOver,
+  formatQtyByUOM,
+  getExcelQtyFormatByUOM,
+} from "../../../utils/hleper.js";
 /* ── Constants ────────────────────────────────────────────────── */
 const AGING_RANGES = [
-  { label: "0–30", min: 0, max: 30 },
-  { label: "31–60", min: 31, max: 60 },
-  { label: "61–90", min: 61, max: 90 },
+  // /{ label: "0–30", min: 0, max: 30 },
+  // { label: "31–60", min: 31, max: 60 },
+  // { label: "61–90", min: 61, max: 90 },
   { label: "91–120", min: 91, max: 120 },
   { label: "121–150", min: 121, max: 150 },
   { label: "151–180", min: 151, max: 180 },
@@ -44,11 +43,28 @@ const AGING_RANGES = [
   { label: "391-420", min: 391, max: 420 },
   { label: "421-450", min: 421, max: 450 },
   { label: "451-480", min: 451, max: 480 },
-  { label: "481+", min: 481, max: 9999 },
+  { label: "481-510", min: 481, max: 510 },
+  { label: "511-540", min: 511, max: 540 },
+  { label: "541-570", min: 541, max: 570 },
+  { label: "571-600", min: 571, max: 600 },
+  { label: "601-630", min: 601, max: 630 },
+  { label: "631-660", min: 631, max: 660 },
+  { label: "661-690", min: 661, max: 690 },
+  { label: "691-720", min: 691, max: 720 },
+  { label: "721-750", min: 721, max: 750 },
+  { label: "751-780", min: 751, max: 780 },
+  { label: "781-810", min: 781, max: 810 },
+  { label: "811-840", min: 811, max: 840 },
+  { label: "841-870", min: 841, max: 870 },
+  { label: "871-900", min: 871, max: 900 },
+  { label: "901-930", min: 901, max: 930 },
+  { label: "931-960", min: 931, max: 960 },
+  { label: "961-990", min: 961, max: 990 },
+  { label: "991 + ", min: 991, max: 99999 },
 ];
 
 const CHART_HEIGHT = 420;
-const RECORDS_PER_PAGE = 19;
+const RECORDS_PER_PAGE = 36;
 
 /* ── Dropdown ─────────────────────────────────────────────────── */
 const SlowTypeDropdown = ({ slowType, setSlowType, autoBorder }) => (
@@ -75,9 +91,8 @@ const agingBadgeStyle = (days) => {
   return { bg: "#fce4ec", color: "#b71c1c" };
 };
 
-/* ══════════════════════════════════════════════════════════════
-   Bucket Modal — styled like the second file's table modal
-══════════════════════════════════════════════════════════════ */
+//  Bucket Modal — styled like the second file's table modal
+
 const BucketModal = ({ open, onClose, bucket }) => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,28 +134,178 @@ const BucketModal = ({ open, onClose, bucket }) => {
     setSortOrder((prev) => (prev === order ? null : order));
     setCurrentPage(1);
   };
+  // ── inside BucketModal, add this function ──
+  const downloadExcel = async () => {
+    if (!filtered.length) {
+      alert("No data");
+      return;
+    }
 
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Aging Bucket Report");
+
+    worksheet.columns = [
+      { header: "S.No", key: "sno", width: 8 },
+      { header: "Item Group", key: "itemGroup", width: 60 },
+      { header: "Item Name", key: "itemName", width: 60 },
+      { header: "Aging (Days)", key: "aging", width: 18 },
+    ];
+
+    /* ================= TITLE ================= */
+    worksheet.insertRow(1, [
+      `Slow Movement Sales Report    (${bucket.label} Days)`,
+    ]);
+    worksheet.mergeCells("A1:D1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).height = 30;
+
+    /* ================= INSIGHTS ROW ================= */
+    addInsightsRowTurnOver({
+      worksheet,
+      startRow: 2,
+      totalColumns: 3,
+      localCompany: "HVM",
+      disableFinYear: true,
+      disableWeek: true,
+    });
+
+    /* ================= HEADER ROW ================= */
+    const headerRow = worksheet.getRow(3);
+    headerRow.height = 26;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9D9D9" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    /* ================= DATA ROWS ================= */
+    filtered.forEach((item, idx) => {
+      const row = worksheet.addRow({
+        sno: idx + 1,
+        itemGroup: item.itemGroup,
+        itemName: item.itemName,
+        aging: Number(item.aging),
+      });
+
+      row.height = 22;
+
+      row.getCell("sno").alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      row.getCell("itemGroup").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("itemName").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("aging").alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+
+      // ✅ text color only, no background
+      const d = Number(item.aging);
+      let agingColor = "FFB71C1C";
+      if (d <= 60) agingColor = "FF2E7D32";
+      else if (d <= 120) agingColor = "FFF57F17";
+      else if (d <= 180) agingColor = "FFE65100";
+
+      row.getCell("aging").font = { bold: true, color: { argb: agingColor } };
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFE0E0E0" } },
+          bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
+          left: { style: "thin", color: { argb: "FFE0E0E0" } },
+          right: { style: "thin", color: { argb: "FFE0E0E0" } },
+        };
+      });
+    });
+
+    /* ================= TOTAL ROW ================= */
+    const totalRow = worksheet.addRow({
+      sno: "",
+      itemGroup: "",
+      itemName: "Total",
+      aging: "",
+    });
+    totalRow.height = 24;
+    totalRow.getCell("itemName").value = `Total Items: ${filtered.length}`;
+    totalRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { top: { style: "thin" } };
+    });
+
+    /* ================= FREEZE ================= */
+    worksheet.views = [{ state: "frozen", ySplit: 3 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `Slow Movement Sales Report ${bucket.label} Days.xlsx`,
+    );
+  };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
       <div className="bg-white w-[1370px] h-[634px] p-4 rounded-xl relative flex flex-col">
         {/* ── HEADER ── */}
-        <div className="flex justify-between items-center mb-1">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h2 className="font-bold uppercase text-sm">
-              Aging Bucket —{" "}
-              <span className="text-blue-600">{bucket.label} days</span>
+              Slow Movement Sales {"    "} ({bucket.label} Days) —{" "}
+              <span className="text-blue-600"> HVM </span>
             </h2>
-            <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              {bucket.items.length} item{bucket.items.length !== 1 ? "s" : ""}
-            </span>
           </div>
-          <button className="text-red-600 hover:text-red-800" onClick={onClose}>
-            <FaTimes size={16} />
-          </button>
+          <div className="flex gap-2 items-center">
+            <div className="bg-gray-300  rounded-lg shadow-2xl flex gap-x-4 gap-1 p-2">
+              <div className="w-24">
+                <select
+                  value={"HVM"}
+                  className="w-full px-2 py-1 text-xs border-2   rounded-md 
+                border-blue-600 transition-all duration-200"
+                >
+                  <option value="HVM">HVM</option>
+                </select>
+              </div>
+            </div>
+            <button
+              className="text-red-600 hover:text-red-800"
+              onClick={onClose}
+            >
+              <FaTimes size={16} />
+            </button>
+          </div>
         </div>
 
+        <p className="text-xs font-semibold  text-gray-600 mb-1">
+          Total Items :{" "}
+          <span className="text-xs font-semibold  px-2  rounded-full">
+            {bucket.items.length}
+          </span>
+        </p>
+
         {/* ── SEARCH + SORT ── */}
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mt-1 mb-2">
           <div className="relative">
             <input
               type="text"
@@ -158,7 +323,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
 
           {/* ── SORT BUTTONS ── */}
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+            <span className="text-[11px] text-gray-600 font-medium uppercase tracking-wide">
               Aging:
             </span>
             <button
@@ -189,32 +354,53 @@ const BucketModal = ({ open, onClose, bucket }) => {
             </button>
           </div>
 
-          {search && (
-            <span className="text-[11px] text-gray-500">
-              {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-            </span>
-          )}
+          <button
+            onClick={downloadExcel}
+            className="ml-auto p-0 rounded-full shadow-md hover:brightness-110 transition-all duration-300"
+            title="Download Excel"
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/732/732220.png"
+              alt="Download Excel"
+              className="w-7 h-7 rounded-lg"
+            />
+          </button>
         </div>
 
         {/* ── TABLE ── */}
         <div className="flex-1 overflow-hidden">
           <div
             className="overflow-x-auto overflow-y-auto h-full border border-gray-300"
-            style={{ borderRadius: "12px" }}
+            style={{ border: "1px solid gray", borderRadius: "16px" }}
           >
             <table className="w-full border-collapse text-[11px] table-fixed">
-              <thead className="bg-gray-100 text-gray-800 sticky top-0 tracking-wider">
+              <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10 tracking-wider">
                 <tr>
-                  <th className="border p-1 text-center w-8">S.No</th>
-                  <th className="border p-1 text-left w-80">Item Name</th>
+                  <th className="border p-1 py-1 text-center w-8">S.No</th>
+                  <th className="border p-1 text-center w-80">Item Group</th>
+                  <th className="border p-1 text-center w-80">Item Name</th>
                   <th className="border p-1 text-center w-28">
-                    Aging (Days)
-                    {sortOrder === "asc" && (
-                      <FaSortAmountUp className="inline ml-1 text-blue-500" size={9} />
-                    )}
-                    {sortOrder === "desc" && (
-                      <FaSortAmountDown className="inline ml-1 text-blue-500" size={9} />
-                    )}
+                    <span className="inline-flex items-center justify-center gap-1">
+                      Aging (Days)
+                      {/* ✅ reserve space always — just change visibility */}
+                      <span
+                        style={{
+                          width: 12,
+                          display: "inline-flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        {sortOrder === "asc" && (
+                          <FaSortAmountUp className="text-blue-500" size={9} />
+                        )}
+                        {sortOrder === "desc" && (
+                          <FaSortAmountDown
+                            className="text-blue-500"
+                            size={9}
+                          />
+                        )}
+                      </span>
+                    </span>
                   </th>
                   <th className="border p-1 text-center w-auto"></th>
                 </tr>
@@ -222,27 +408,38 @@ const BucketModal = ({ open, onClose, bucket }) => {
               <tbody>
                 {currentRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-6 text-gray-400 text-xs">
+                    <td
+                      colSpan={3}
+                      className="text-center py-6 text-gray-400 text-xs"
+                    >
                       No items found
                     </td>
                   </tr>
                 ) : (
                   currentRecords.map((item, idx) => {
                     const { bg, color } = agingBadgeStyle(item.aging);
-                    const serialNo = (safePage - 1) * RECORDS_PER_PAGE + idx + 1;
+                    const serialNo =
+                      (safePage - 1) * RECORDS_PER_PAGE + idx + 1;
                     return (
                       <tr
                         key={idx}
-                        className="text-gray-800 bg-white even:bg-gray-50 hover:bg-blue-50 transition-colors"
+                        className="text-gray-800 text-[11px] bg-white even:bg-gray-50  transition-colors"
                       >
-                        <td className="border p-1 text-center text-gray-400">{serialNo}</td>
-                        <td className="border p-1 pl-2 text-left font-medium">{item.itemName}</td>
-                        <td className="border p-1 text-center">
+                        <td className="border p-1 text-center text-gray-800">
+                          {serialNo}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.itemGroup}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.itemName}
+                        </td>
+                        <td className="border p-1 text-right pr-1">
                           <span
-                            style={{ backgroundColor: bg, color }}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ color }}
+                            className="text-[11px] font-bold px-2 py-0.5 "
                           >
-                            {item.aging}d
+                            {item.aging}
                           </span>
                         </td>
                         <td className="border p-1 text-center text-gray-400"></td>
@@ -301,7 +498,186 @@ const BucketModal = ({ open, onClose, bucket }) => {
 };
 
 /* ── Aging Chart ──────────────────────────────────────────────── */
-const AgingChart = ({ response, onBarClick }) => {
+// const AgingChart = ({ response, onBarClick }) => {
+//   const grouped = useMemo(() => {
+//     if (!Array.isArray(response?.data)) return [];
+//     return AGING_RANGES.map((range) => {
+//       const items = response.data.filter(
+//         (item) =>
+//           Number(item.aging) >= range.min && Number(item.aging) <= range.max,
+//       );
+//       return { ...range, items };
+//     }).filter((g) => g.items.length > 0);
+//   }, [response]);
+
+//   const categories = useMemo(() => grouped.map((g) => g.label), [grouped]);
+//   const { barData, lineData, maxBar } = useMemo(() => {
+//     const barData = grouped.map((g) => g.items.length);
+//     const lineData = grouped.map((g) =>
+//       g.items.reduce((sum, i) => sum + Number(i.aging), 0),
+//     );
+//     const maxBar = Math.max(...barData, 1);
+//     return { barData, lineData, maxBar };
+//   }, [grouped]);
+
+//   const option = useMemo(
+//     () => ({
+//       backgroundColor: "#ffffff",
+//       tooltip: {
+//         trigger: "axis",
+//         axisPointer: { type: "shadow" },
+//         formatter(params) {
+//           const idx = params[0]?.dataIndex;
+//           const g = grouped[idx];
+//           if (!g) return "";
+//           const lines = g.items
+//             .slice(0, 5)
+//             .map((i) => `• ${i.itemName} (${i.aging}d)`)
+//             .join("<br/>");
+//           const more =
+//             g.items.length > 5
+//               ? `<br/><span style="color:#14c8d4;font-style:italic">+${g.items.length - 5} more — click to see all</span>`
+//               : "";
+//           return `<b>${g.label} days</b><br/>${lines}${more}`;
+//         },
+//       },
+//       legend: {
+//         data: ["Item Count", "Aging Sum"],
+//         textStyle: { color: "#333" },
+//         top: 8,
+//       },
+//       xAxis: {
+//         data: categories,
+//         axisLine: { lineStyle: { color: "#999" } },
+//         axisLabel: { color: "#333", fontSize: 11 },
+//       },
+//       yAxis: [
+//         {
+//           name: "Items",
+//           nameTextStyle: { color: "#333", fontSize: 11 },
+//           splitLine: { show: false },
+//           axisLine: { lineStyle: { color: "#999" } },
+//           axisLabel: { color: "#333" },
+//         },
+//         {
+//           name: "Aging (days)",
+//           nameTextStyle: { color: "#f5a623", fontSize: 11 },
+//           splitLine: { show: false },
+//           axisLine: { lineStyle: { color: "#f5a623" } },
+//           axisLabel: { color: "#f5a623" },
+//           position: "right",
+//         },
+//       ],
+//       series: [
+//         {
+//           name: "Item Count",
+//           type: "bar",
+//           barWidth: 10,
+//           yAxisIndex: 0,
+//           itemStyle: {
+//             borderRadius: 5,
+//             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+//               { offset: 0, color: "#14c8d4" },
+//               { offset: 1, color: "#43eec6" },
+//             ]),
+//           },
+//           cursor: "pointer",
+//           data: barData,
+//           z: 2,
+//         },
+//         {
+//           name: "Item Count",
+//           type: "bar",
+//           barGap: "-100%",
+//           barWidth: 10,
+//           yAxisIndex: 0,
+//           itemStyle: {
+//             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+//               { offset: 0, color: "rgba(20,200,212,0.5)" },
+//               { offset: 0.2, color: "rgba(20,200,212,0.2)" },
+//               { offset: 1, color: "rgba(20,200,212,0)" },
+//             ]),
+//           },
+//           z: -12,
+//           silent: true,
+//           tooltip: { show: false },
+//           data: barData.map(() => maxBar),
+//         },
+//         {
+//           name: "Item Count",
+//           type: "pictorialBar",
+//           symbol: "rect",
+//           itemStyle: { color: "#ffffff" },
+//           symbolRepeat: true,
+//           symbolSize: [12, 4],
+//           symbolMargin: 1,
+//           z: -10,
+//           yAxisIndex: 0,
+//           silent: true,
+//           tooltip: { show: false },
+//           data: barData.map(() => maxBar),
+//         },
+//         {
+//           name: "Aging Sum",
+//           type: "line",
+//           smooth: true,
+//           showAllSymbol: true,
+//           symbol: "emptyCircle",
+//           symbolSize: 15,
+//           yAxisIndex: 1,
+//           lineStyle: { color: "#f5a623", width: 2 },
+//           itemStyle: { color: "#f5a623" },
+//           data: lineData,
+//           z: 3,
+//         },
+//       ],
+//       grid: { top: 60, bottom: 40, left: 55, right: 65 },
+//     }),
+//     [categories, barData, lineData, grouped, maxBar],
+//   );
+
+//   return (
+//     <ReactECharts
+//       echarts={echarts}
+//       option={option}
+//       notMerge
+//       lazyUpdate
+//       style={{ width: "100%", height: CHART_HEIGHT }}
+//       onEvents={{
+//         click: (params) => {
+//           if (params.seriesIndex !== 0) return;
+//           const g = grouped[params.dataIndex];
+//           if (g?.items.length) onBarClick(g);
+//         },
+//       }}
+//     />
+//   );
+// };
+
+const AgingChart = ({
+  response,
+  onBarClick,
+  finYrData,
+  selectedYear,
+  onYearChange,
+}) => {
+  // ── year navigation ──────────────────────────────────────────
+  const years = useMemo(
+    () => (finYrData || [])?.data?.map((f) => f.finYear ?? f).filter(Boolean),
+    [finYrData],
+  );
+  const currentYearIdx = useMemo(
+    () => years.indexOf(selectedYear),
+    [years, selectedYear],
+  );
+
+  const canGoPrev = currentYearIdx > 0;
+  const canGoNext = currentYearIdx < years.length - 1;
+
+  const goPrev = () => canGoPrev && onYearChange(years[currentYearIdx - 1]);
+  const goNext = () => canGoNext && onYearChange(years[currentYearIdx + 1]);
+
+  // ── existing grouped / chart logic ──────────────────────────
   const grouped = useMemo(() => {
     if (!Array.isArray(response?.data)) return [];
     return AGING_RANGES.map((range) => {
@@ -309,17 +685,22 @@ const AgingChart = ({ response, onBarClick }) => {
         (item) =>
           Number(item.aging) >= range.min && Number(item.aging) <= range.max,
       );
-      return { ...range, items };
+      const agingSum = items.reduce((sum, i) => sum + Number(i.aging), 0);
+      return { ...range, items, agingSum };
     }).filter((g) => g.items.length > 0);
   }, [response]);
 
   const categories = useMemo(() => grouped.map((g) => g.label), [grouped]);
+
   const { barData, lineData, maxBar } = useMemo(() => {
     const barData = grouped.map((g) => g.items.length);
-    const lineData = grouped.map((g) =>
-      g.items.reduce((sum, i) => sum + Number(i.aging), 0),
-    );
+    const rawLineData = grouped.map((g) => g.agingSum);
     const maxBar = Math.max(...barData, 1);
+    const maxLine = Math.max(...rawLineData, 1);
+    // normalize line to same scale as bars
+    const lineData = rawLineData.map((v) =>
+      parseFloat(((v / maxLine) * maxBar).toFixed(2)),
+    );
     return { barData, lineData, maxBar };
   }, [grouped]);
 
@@ -341,7 +722,11 @@ const AgingChart = ({ response, onBarClick }) => {
             g.items.length > 5
               ? `<br/><span style="color:#14c8d4;font-style:italic">+${g.items.length - 5} more — click to see all</span>`
               : "";
-          return `<b>${g.label} days</b><br/>${lines}${more}`;
+          return (
+            `<b>${g.label} days</b><br/>` +
+            `Items: <b>${g.items.length}</b><br/>` +
+            `${lines}${more}`
+          );
         },
       },
       legend: {
@@ -354,29 +739,18 @@ const AgingChart = ({ response, onBarClick }) => {
         axisLine: { lineStyle: { color: "#999" } },
         axisLabel: { color: "#333", fontSize: 11 },
       },
-      yAxis: [
-        {
-          name: "Items",
-          nameTextStyle: { color: "#333", fontSize: 11 },
-          splitLine: { show: false },
-          axisLine: { lineStyle: { color: "#999" } },
-          axisLabel: { color: "#333" },
-        },
-        {
-          name: "Aging (days)",
-          nameTextStyle: { color: "#f5a623", fontSize: 11 },
-          splitLine: { show: false },
-          axisLine: { lineStyle: { color: "#f5a623" } },
-          axisLabel: { color: "#f5a623" },
-          position: "right",
-        },
-      ],
+      yAxis: {
+        name: "Items",
+        nameTextStyle: { color: "#333", fontSize: 11 },
+        splitLine: { show: false },
+        axisLine: { lineStyle: { color: "#999" } },
+        axisLabel: { color: "#333" },
+      },
       series: [
         {
           name: "Item Count",
           type: "bar",
           barWidth: 10,
-          yAxisIndex: 0,
           itemStyle: {
             borderRadius: 5,
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -393,7 +767,6 @@ const AgingChart = ({ response, onBarClick }) => {
           type: "bar",
           barGap: "-100%",
           barWidth: 10,
-          yAxisIndex: 0,
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: "rgba(20,200,212,0.5)" },
@@ -415,7 +788,6 @@ const AgingChart = ({ response, onBarClick }) => {
           symbolSize: [12, 4],
           symbolMargin: 1,
           z: -10,
-          yAxisIndex: 0,
           silent: true,
           tooltip: { show: false },
           data: barData.map(() => maxBar),
@@ -427,33 +799,100 @@ const AgingChart = ({ response, onBarClick }) => {
           showAllSymbol: true,
           symbol: "emptyCircle",
           symbolSize: 15,
-          yAxisIndex: 1,
           lineStyle: { color: "#f5a623", width: 2 },
           itemStyle: { color: "#f5a623" },
+          cursor: "pointer", // <-- show pointer on dots
           data: lineData,
           z: 3,
         },
       ],
-      grid: { top: 60, bottom: 40, left: 55, right: 65 },
+      grid: { top: 60, bottom: 40, left: 55, right: 30 },
     }),
     [categories, barData, lineData, grouped, maxBar],
   );
 
+  // ── unified click handler ────────────────────────────────────
+  // seriesIndex 0 = bar (Item Count)
+  // seriesIndex 3 = line (Aging Sum yellow dots)
+  const handleChartClick = (params) => {
+    const CLICKABLE_SERIES = [0, 3]; // bar + yellow line dots
+    if (!CLICKABLE_SERIES.includes(params.seriesIndex)) return;
+    const g = grouped[params.dataIndex];
+    if (g?.items.length) onBarClick(g);
+  };
+
   return (
-    <ReactECharts
-      echarts={echarts}
-      option={option}
-      notMerge
-      lazyUpdate
-      style={{ width: "100%", height: CHART_HEIGHT }}
-      onEvents={{
-        click: (params) => {
-          if (params.seriesIndex !== 0) return;
-          const g = grouped[params.dataIndex];
-          if (g?.items.length) onBarClick(g);
-        },
-      }}
-    />
+    <div style={{ position: "relative", width: "100%" }}>
+      {/* ── LEFT ARROW — go to NEXT (newer) year ── */}
+      <button
+        onClick={goNext}
+        disabled={!canGoNext}
+        title=""
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          background: canGoNext ? "#e0f7fa" : "#f5f5f5",
+          border: "1px solid",
+          borderColor: canGoNext ? "#14c8d4" : "#e0e0e0",
+          borderRadius: "50%",
+          width: 28,
+          height: 28,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: canGoNext ? "pointer" : "not-allowed",
+          boxShadow: canGoNext ? "0 2px 6px rgba(20,200,212,0.3)" : "none",
+          transition: "all 0.2s",
+        }}
+      >
+        <FaChevronLeft size={11} color={canGoNext ? "#14c8d4" : "#bbb"} />
+      </button>
+
+      {/* ── CHART ── */}
+      <div style={{ paddingLeft: 36, paddingRight: 36 }}>
+        <ReactECharts
+          echarts={echarts}
+          option={option}
+          notMerge
+          lazyUpdate
+          style={{ width: "100%", height: CHART_HEIGHT }}
+          onEvents={{
+            click: handleChartClick,
+          }}
+        />
+      </div>
+
+      {/* ── RIGHT ARROW — go to PREV (older/decrease) year ── */}
+      <button
+        onClick={goPrev}
+        disabled={!canGoPrev}
+        title=""
+        style={{
+          position: "absolute",
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          background: canGoPrev ? "#e0f7fa" : "#f5f5f5",
+          border: "1px solid",
+          borderColor: canGoPrev ? "#14c8d4" : "#e0e0e0",
+          borderRadius: "50%",
+          width: 28,
+          height: 28,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: canGoPrev ? "pointer" : "not-allowed",
+          boxShadow: canGoPrev ? "0 2px 6px rgba(20,200,212,0.3)" : "none",
+          transition: "all 0.2s",
+        }}
+      >
+        <FaChevronRight size={11} color={canGoPrev ? "#14c8d4" : "#bbb"} />
+      </button>
+    </div>
   );
 };
 
@@ -611,25 +1050,114 @@ const LowVelocityChart = ({ data, onBarClick }) => {
   );
 };
 
-/* ── Dead Stock — Pill list ───────────────────────────────────── */
-const PILL_COLORS = [
-  "#993556",
-  "#CC3F57",
-  "#EA5151",
-  "#FF7853",
-  "#9A2555",
-  "#6B1A3A",
-  "#c0391b",
-];
-
 const DeadStockChart = ({ data }) => {
-  const items = useMemo(
-    () =>
-      [...(data || [])].sort((a, b) => a.itemName.localeCompare(b.itemName)),
-    [data],
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState(null); // { groupName, items[] }
+
+  // ── group by itemGroup ──────────────────────────────────────
+  const grouped = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    const map = {};
+    data.forEach((item) => {
+      const grp = item.itemGroup || "Unknown";
+      if (!map[grp]) map[grp] = [];
+      map[grp].push(item);
+    });
+    return Object.entries(map)
+      .map(([groupName, items]) => ({ groupName, items }))
+      .sort((a, b) => b.items.length - a.items.length); // highest first
+  }, [data]);
+
+  const categories = grouped.map((g) => g.groupName);
+  const barData = grouped.map((g) => g.items.length);
+  const maxBar = Math.max(...barData, 1);
+
+  const option = useMemo(
+    () => ({
+      backgroundColor: "#ffffff",
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        formatter(params) {
+          const idx = params[0]?.dataIndex;
+          const g = grouped[idx];
+          if (!g) return "";
+          const preview = g.items
+            .slice(0, 4)
+            .map((i) => `• ${i.itemName}`)
+            .join("<br/>");
+          const more =
+            g.items.length > 4
+              ? `<br/><span style="color:#CC3F57;font-style:italic">+${g.items.length - 4} more — click to see all</span>`
+              : "";
+          return `<b>${g.groupName}</b><br/>Items: <b>${g.items.length}</b><br/>${preview}${more}`;
+        },
+      },
+      grid: { top: 30, bottom: 60, left: 55, right: 20 },
+      xAxis: {
+        type: "category",
+        data: categories,
+        axisLabel: {
+          color: "#555",
+          fontSize: 10,
+          rotate: 30,
+          overflow: "truncate",
+          width: 80,
+        },
+        axisLine: { lineStyle: { color: "#ddd" } },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        name: "Items",
+        nameTextStyle: { color: "#999", fontSize: 10 },
+        splitLine: { lineStyle: { type: "dashed", color: "#f0f0f0" } },
+        axisLine: { show: false },
+        axisLabel: { color: "#888", fontSize: 10 },
+      },
+      series: [
+        {
+          name: "Dead Stock Items",
+          type: "bar",
+          barWidth: 14,
+          cursor: "pointer",
+          itemStyle: {
+            borderRadius: [4, 4, 0, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "#CC3F57" },
+              { offset: 1, color: "#FF7853" },
+            ]),
+          },
+          label: {
+            show: true,
+            position: "top",
+            fontSize: 9,
+            color: "#555",
+            formatter: (p) => p.value,
+          },
+          data: barData,
+        },
+        // ── ghost bars (background fill) ──
+        {
+          type: "bar",
+          barWidth: 14,
+          barGap: "-100%",
+          silent: true,
+          tooltip: { show: false },
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "rgba(204,63,87,0.15)" },
+              { offset: 1, color: "rgba(255,120,83,0.04)" },
+            ]),
+            borderRadius: [4, 4, 0, 0],
+          },
+          data: barData.map(() => maxBar),
+        },
+      ],
+    }),
+    [grouped, categories, barData, maxBar],
   );
 
-  if (!items.length) {
+  if (!grouped.length) {
     return (
       <Box
         sx={{
@@ -662,100 +1190,427 @@ const DeadStockChart = ({ data }) => {
   }
 
   return (
-    <Box sx={{ px: 1.5, pt: 1, pb: 1 }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 1.5,
-          flexWrap: "wrap",
-          gap: 0.8,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box
-            sx={{
-              width: 9,
-              height: 9,
-              borderRadius: "50%",
-              backgroundColor: "#b71c1c",
-            }}
-          />
-          <Typography
-            sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#b71c1c" }}
-          >
-            {items.length} dead stock item{items.length !== 1 ? "s" : ""}
-          </Typography>
-        </Box>
-        <Typography sx={{ fontSize: "0.68rem", color: "#bbb" }}>
-          Items with no sales this financial year
-        </Typography>
+    <>
+      {/* ── TOP BAR ── */}
+
+      {/* ── CHART ── */}
+      <Box sx={{ height: CHART_HEIGHT, overflow: "hidden" }}>
+        <ReactECharts
+          echarts={echarts}
+          option={option}
+          notMerge
+          lazyUpdate
+          style={{ width: "100%", height: CHART_HEIGHT - 28 }}
+          onEvents={{
+            click: (params) => {
+              const g = grouped[params.dataIndex];
+              if (g?.items.length) {
+                setModalData(g);
+                setModalOpen(true);
+              }
+            },
+          }}
+        />
       </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px",
-          height: CHART_HEIGHT - 56,
-          overflowY: "auto",
-          overflowX: "hidden",
-          alignContent: "flex-start",
-          pr: 0.5,
-          "&::-webkit-scrollbar": { width: "3px" },
-          "&::-webkit-scrollbar-track": { background: "#fce4ec" },
-          "&::-webkit-scrollbar-thumb": {
-            background: "#CC3F57",
-            borderRadius: "3px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": { background: "#9A2555" },
-        }}
-      >
-        {items.map((item, idx) => {
-          const dot = PILL_COLORS[idx % PILL_COLORS.length];
-          return (
-            <Box
-              key={idx}
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                backgroundColor: "#fce4ec",
-                border: `1px solid ${dot}44`,
-                borderRadius: "999px",
-                px: 1.2,
-                py: 0.4,
-                cursor: "default",
-                userSelect: "none",
-              }}
+      {/* ── GROUP ITEMS MODAL ── */}
+      {modalOpen && modalData && (
+        <DeadStockGroupModal
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setModalData(null);
+          }}
+          group={modalData}
+          allGroups={grouped}
+        />
+      )}
+    </>
+  );
+};
+const DeadStockGroupModal = ({ open, onClose, group, allGroups = [] }) => {
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeGroup, setActiveGroup] = useState(group); // ✅ local group state
+
+  // ── sync when parent group changes ──
+  useEffect(() => {
+    setActiveGroup(group);
+    setSearch("");
+    setCurrentPage(1);
+  }, [group]);
+
+  // ── reset page/search on group switch ──
+  const handleGroupChange = (groupName) => {
+    const found = allGroups.find((g) => g.groupName === groupName);
+    if (found) {
+      setActiveGroup(found);
+      setSearch("");
+      setCurrentPage(1);
+    }
+  };
+
+  const filtered = useMemo(() => {
+    if (!activeGroup?.items) return [];
+    const q = search.trim().toLowerCase();
+    return !q
+      ? [...activeGroup.items]
+      : activeGroup.items.filter((i) => i.itemName.toLowerCase().includes(q));
+  }, [activeGroup, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / RECORDS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const currentRecords = filtered.slice(
+    (safePage - 1) * RECORDS_PER_PAGE,
+    safePage * RECORDS_PER_PAGE,
+  );
+
+  if (!open || !activeGroup) return null;
+
+  const downloadExcel = async () => {
+    if (!filtered.length) {
+      alert("No data");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Dead Stock Report");
+
+    worksheet.columns = [
+      { header: "S.No", key: "sno", width: 8 },
+      { header: "Item Name", key: "itemName", width: 60 },
+      { header: "Doc No", key: "docId", width: 40 },
+      { header: "Supplier Name", key: "supplierName", width: 50 },
+      { header: "Rack No", key: "rackNo", width: 25 },
+      { header: "Quantity", key: "quantity", width: 16 },
+      { header: "UOM", key: "uom", width: 20 },
+    ];
+
+    /* ================= TITLE ================= */
+    worksheet.insertRow(1, [`Dead Stock Report`]);
+    worksheet.mergeCells("A1:G1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).height = 30;
+
+    /* ================= INSIGHTS ROW ================= */
+    addInsightsRowTurnOver({
+      worksheet,
+      startRow: 2,
+      totalColumns: 4,
+      localCompany: "HVM",
+      disableFinYear: true,
+      disableWeek: true,
+      dynamicField: "Item Group",
+      dynamicValue: activeGroup.groupName,
+    });
+
+    /* ================= HEADER ROW ================= */
+    const headerRow = worksheet.getRow(3);
+    headerRow.height = 26;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9D9D9" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    /* ================= DATA ROWS ================= */
+    filtered.forEach((item, idx) => {
+      const row = worksheet.addRow({
+        sno: idx + 1,
+        itemName: item.itemName,
+        docId: item.docId,
+        supplierName: item.supplierName,
+        rackNo: item.rackNo,
+        quantity: Number(item.quantity || 0),
+        uom: item.uom ?? "",
+      });
+
+      row.height = 22;
+
+      row.getCell("sno").alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      row.getCell("itemName").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("docId").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("supplierName").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("rackNo").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("uom").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("quantity").alignment = {
+        horizontal: "right",
+        vertical: "middle",
+        indent: 1,
+      };
+
+      // ✅ UOM-based quantity format
+      row.getCell("quantity").numFmt = getExcelQtyFormatByUOM(item.uom);
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFE0E0E0" } },
+          bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
+          left: { style: "thin", color: { argb: "FFE0E0E0" } },
+          right: { style: "thin", color: { argb: "FFE0E0E0" } },
+        };
+      });
+    });
+
+    /* ================= TOTAL ROW ================= */
+    const totalRow = worksheet.addRow({
+      sno: "",
+      itemName: `Total Items: ${filtered.length}`,
+      docId: "",
+      supplierName: "",
+      rackNo: "",
+      quantity: "",
+      uom: "",
+    });
+    totalRow.height = 24;
+    totalRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { top: { style: "thin" } };
+    });
+
+    /* ================= FREEZE ================= */
+    worksheet.views = [{ state: "frozen", ySplit: 3 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `Dead Stock Report ${activeGroup.groupName}.xlsx`,
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
+      <div className="bg-white w-[1370px] h-[634px] p-4 rounded-xl relative flex flex-col">
+        {/* ── HEADER ── */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold uppercase text-sm">
+              Dead Stock - <span className="text-blue-600"> HVM </span>{" "}
+            </h2>
+          </div>
+          <div className="flex gap-2 items-center">
+            <div className="bg-gray-300 rounded-lg shadow-2xl flex items-center gap-2 p-2">
+              {/* HVM select */}
+              <div className="w-20">
+                <select
+                  value={"HVM"}
+                  className="w-full px-2 py-1 text-xs border-2 rounded-md
+                             border-blue-600 transition-all duration-200"
+                >
+                  <option value="HVM">HVM</option>
+                </select>
+              </div>
+              {/* ✅ Item Group Switcher */}
+              <div className="w-60">
+                <select
+                  value={activeGroup.groupName}
+                  onChange={(e) => handleGroupChange(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border-2 rounded-md
+                             border-blue-600 transition-all duration-200 bg-white"
+                >
+                  {allGroups.map((g) => (
+                    <option key={g.groupName} value={g.groupName}>
+                      {g.groupName} ({g.items.length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button
+              className="text-red-600 hover:text-red-800"
+              onClick={onClose}
             >
-              <Box
-                sx={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  backgroundColor: dot,
-                  flexShrink: 0,
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: "0.75rem",
-                  fontWeight: 500,
-                  color: "#6B1A3A",
-                  whiteSpace: "nowrap",
-                  maxWidth: 200,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {item.itemName}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-    </Box>
+              <FaTimes size={16} />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs font-semibold text-gray-600 mb-1">
+          Total Items :{" "}
+          <span className="text-xs font-semibold px-2 rounded-full">
+            {activeGroup.items.length}
+          </span>
+        </p>
+
+        {/* ── SEARCH + EXCEL ── */}
+        <div className="flex items-center gap-3 mt-1 mb-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search item name..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+
+          <button
+            onClick={downloadExcel}
+            className="ml-auto p-0 rounded-full shadow-md hover:brightness-110 transition-all duration-300"
+            title="Download Excel"
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/732/732220.png"
+              alt="Download Excel"
+              className="w-7 h-7 rounded-lg"
+            />
+          </button>
+        </div>
+
+        {/* ── TABLE ── */}
+        <div className="flex-1 overflow-hidden">
+          <div
+            className="overflow-x-auto overflow-y-auto h-full border border-gray-300"
+            style={{ border: "1px solid gray", borderRadius: "16px" }}
+          >
+            <table className="w-full border-collapse text-[11px] table-fixed">
+              <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10 tracking-wider">
+                <tr>
+                  <th className="border p-1 text-center w-8">S.No</th>
+                  <th className="border p-1 text-center w-80">Item Name</th>
+                  <th className="border p-1 text-center w-40">Doc No</th>
+                  <th className="border p-1 text-center w-80">Supplier Name</th>
+                  <th className="border p-1 text-center w-28">Rack No</th>
+                  <th className="border p-1 text-center w-20">Quantity</th>
+                  <th className="border p-1 text-center w-20">UOM</th>
+                  <th className="border p-1 text-center w-auto"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRecords.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="text-center py-6 text-gray-400 text-xs"
+                    >
+                      No items found
+                    </td>
+                  </tr>
+                ) : (
+                  currentRecords.map((item, idx) => {
+                    const serialNo =
+                      (safePage - 1) * RECORDS_PER_PAGE + idx + 1;
+                    return (
+                      <tr
+                        key={idx}
+                        className="text-gray-800 bg-white text-[11px] even:bg-gray-50  transition-colors"
+                      >
+                        <td className="border p-1 text-center text-gray-800">
+                          {serialNo}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.itemName}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.docId}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.supplierName}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.rackNo}
+                        </td>
+                        <td className="border p-1 text-right pr-1 text-gray-800">
+                          {formatQtyByUOM(item.quantity, item.uom)}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.uom}
+                        </td>
+                        <td className="border p-1 text-center text-gray-500"></td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ── PAGINATION ── */}
+        <div className="flex justify-between items-center mt-2 text-[11px]">
+          <span className="text-gray-400 text-xs">
+            Showing {currentRecords.length} of {filtered.length} item
+            {filtered.length !== 1 ? "s" : ""}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-md ${safePage === 1 ? "text-gray-300 cursor-not-allowed" : "text-blue-500 hover:bg-gray-100"}`}
+            >
+              <FaStepBackward size={13} />
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-md ${safePage === 1 ? "text-gray-300 cursor-not-allowed" : "text-blue-500 hover:bg-gray-100"}`}
+            >
+              <FaChevronLeft size={13} />
+            </button>
+            <span className="text-xs font-semibold px-2">
+              Page {safePage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-md ${safePage === totalPages ? "text-gray-300 cursor-not-allowed" : "text-blue-500 hover:bg-gray-100"}`}
+            >
+              <FaChevronRight size={13} />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-md ${safePage === totalPages ? "text-gray-300 cursor-not-allowed" : "text-blue-500 hover:bg-gray-100"}`}
+            >
+              <FaStepForward size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -789,7 +1644,6 @@ const SlowMovement = ({
     { params: { selectedYear, selectedCompany, type: selectedfilterType } },
     { skip: skipBase || slowType !== "AGING" },
   );
-
   const {
     data: velocityResponse,
     isFetching: velFetching,
@@ -832,7 +1686,7 @@ const SlowMovement = ({
         }}
       >
         <CardHeader
-          title="Slow Movement Sale"
+          title="Slow Movement Sales"
           titleTypographyProps={{
             sx: { fontSize: ".9rem", fontWeight: 600, color: "#333" },
           }}
@@ -859,10 +1713,11 @@ const SlowMovement = ({
         <CardContent
           sx={{
             position: "relative",
-            minHeight: CHART_HEIGHT,
+            height: CHART_HEIGHT + 16, // ✅ fixed height — no more flicker
             width: "100%",
             boxSizing: "border-box",
             p: "8px !important",
+            overflow: "hidden",
           }}
         >
           {(isLoading || isFetching) && (
@@ -885,6 +1740,9 @@ const SlowMovement = ({
           {slowType === "AGING" && (
             <AgingChart
               response={agingResponse}
+              finYrData={finYrData} // ✅ pass fin year list
+              selectedYear={selectedYear} // ✅ pass current year
+              onYearChange={(yr) => setSelectedYear(yr)} // ✅ local year update
               onBarClick={(bucket) => {
                 setBucketModalData(bucket);
                 setBucketModalOpen(true);
