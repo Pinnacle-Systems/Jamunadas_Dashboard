@@ -25,7 +25,7 @@ import {
   formatQtyByUOM,
   getExcelQtyFormatByUOM,
 } from "../../../utils/hleper.js";
-/* ── Constants ────────────────────────────────────────────────── */
+
 const AGING_RANGES = [
   // /{ label: "0–30", min: 0, max: 30 },
   // { label: "31–60", min: 31, max: 60 },
@@ -78,6 +78,7 @@ const SlowTypeDropdown = ({ slowType, setSlowType, autoBorder }) => (
     onChange={(e) => setSlowType(e.target.value)}
   >
     <option value="AGING">Aging</option>
+    <option value="VELOCITY">Low Velocity</option>
     <option value="DEADSTOCK">Dead Stock</option>
   </select>
 );
@@ -94,23 +95,44 @@ const agingBadgeStyle = (days) => {
 //  Bucket Modal — styled like the second file's table modal
 
 const BucketModal = ({ open, onClose, bucket }) => {
-  const [search, setSearch] = useState("");
+  const [itemNameSearch, setItemNameSearch] = useState("");
+  const [itemGroupSearch, setItemGroupSearch] = useState("");
+  const [docSearch, setDocSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("asc"); // null | "asc" | "desc"
 
   /* reset page & search whenever bucket changes */
   useEffect(() => {
-    setSearch("");
+    setItemNameSearch("");
+    setItemGroupSearch("");
+    setDocSearch("");
     setCurrentPage(1);
     setSortOrder("asc");
   }, [bucket]);
 
   const filtered = useMemo(() => {
     if (!bucket?.items) return [];
-    const q = search.trim().toLowerCase();
-    let result = !q
-      ? [...bucket.items]
-      : bucket.items.filter((i) => i.itemName.toLowerCase().includes(q));
+
+    let result = [...bucket.items];
+
+    if (itemNameSearch.trim()) {
+      const q = itemNameSearch.toLowerCase();
+      result = result.filter((i) => i.itemName?.toLowerCase().includes(q));
+    }
+
+    if (itemGroupSearch.trim()) {
+      const q = itemGroupSearch.toLowerCase();
+      result = result.filter((i) => i.itemGroup?.toLowerCase().includes(q));
+    }
+
+    if (docSearch.trim()) {
+      const q = docSearch.toLowerCase();
+      result = result.filter((i) =>
+        String(i.docId || "")
+          .toLowerCase()
+          .includes(q),
+      );
+    }
 
     if (sortOrder === "asc") {
       result = result.sort((a, b) => a.aging - b.aging);
@@ -119,7 +141,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
     }
 
     return result;
-  }, [bucket, search, sortOrder]);
+  }, [bucket, itemNameSearch, itemGroupSearch, docSearch, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / RECORDS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
@@ -148,6 +170,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
       { header: "S.No", key: "sno", width: 8 },
       { header: "Item Group", key: "itemGroup", width: 60 },
       { header: "Item Name", key: "itemName", width: 60 },
+      { header: "Doc No", key: "docNo", width: 30 },
       { header: "Aging (Days)", key: "aging", width: 18 },
     ];
 
@@ -155,7 +178,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
     worksheet.insertRow(1, [
       `Slow Movement Sales Report    (${bucket.label} Days)`,
     ]);
-    worksheet.mergeCells("A1:D1");
+    worksheet.mergeCells("A1:E1");
     const titleCell = worksheet.getCell("A1");
     titleCell.font = { bold: true, size: 14 };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
@@ -196,6 +219,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
         sno: idx + 1,
         itemGroup: item.itemGroup,
         itemName: item.itemName,
+        docNo: item.docId,
         aging: Number(item.aging),
       });
 
@@ -211,6 +235,11 @@ const BucketModal = ({ open, onClose, bucket }) => {
         indent: 1,
       };
       row.getCell("itemName").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("docNo").alignment = {
         horizontal: "left",
         vertical: "middle",
         indent: 1,
@@ -244,6 +273,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
       sno: "",
       itemGroup: "",
       itemName: "Total",
+      docNo: "",
       aging: "",
     });
     totalRow.height = 24;
@@ -309,10 +339,38 @@ const BucketModal = ({ open, onClose, bucket }) => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search item name..."
-              value={search}
+              placeholder="Item Group..."
+              value={itemGroupSearch}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setItemGroupSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Item name..."
+              value={itemNameSearch}
+              onChange={(e) => {
+                setItemNameSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Doc No..."
+              value={docSearch}
+              onChange={(e) => {
+                setDocSearch(e.target.value);
                 setCurrentPage(1);
               }}
               className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
@@ -379,6 +437,7 @@ const BucketModal = ({ open, onClose, bucket }) => {
                   <th className="border p-1 py-1 text-center w-8">S.No</th>
                   <th className="border p-1 text-center w-80">Item Group</th>
                   <th className="border p-1 text-center w-80">Item Name</th>
+                  <th className="border p-1 text-center w-40">Doc No</th>
                   <th className="border p-1 text-center w-28">
                     <span className="inline-flex items-center justify-center gap-1">
                       Aging (Days)
@@ -433,6 +492,9 @@ const BucketModal = ({ open, onClose, bucket }) => {
                         </td>
                         <td className="border p-1 pl-2 text-left ">
                           {item.itemName}
+                        </td>
+                        <td className="border p-1 pl-2 text-left ">
+                          {item.docId}
                         </td>
                         <td className="border p-1 text-right pr-1">
                           <span
@@ -898,125 +960,126 @@ const AgingChart = ({
 
 /* ── Low Velocity Horizontal Bar ─────────────────────────────── */
 const LowVelocityChart = ({ data, onBarClick }) => {
-  const sorted = useMemo(
-    () =>
-      [...(data || [])]
-        .sort((a, b) => Number(a.velocity) - Number(b.velocity))
-        .slice(0, 15),
-    [data],
-  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState(null);
 
-  const option = useMemo(() => {
-    const names = sorted.map((i) =>
-      i.itemName.length > 20 ? i.itemName.slice(0, 19) + "…" : i.itemName,
-    );
-    const velocities = sorted.map((i) => Number(i.velocity));
-    const agings = sorted.map((i) => Number(i.aging));
-    return {
+  // ── group by itemGroup ──────────────────────────────────────
+  const grouped = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    const map = {};
+    data.forEach((item) => {
+      const grp = item.itemGroup || "Unknown";
+      if (!map[grp]) map[grp] = [];
+      map[grp].push(item);
+    });
+    return Object.entries(map)
+      .map(([groupName, items]) => ({ groupName, items }))
+      .sort((a, b) => b.items.length - a.items.length);
+  }, [data]);
+
+  const categories = grouped.map((g) => g.groupName);
+  const barData = grouped.map((g) => g.items.length);
+  const maxBar = Math.max(...barData, 1);
+
+  const option = useMemo(
+    () => ({
       backgroundColor: "#ffffff",
       tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "shadow" },
-        formatter(params) {
-          const idx = params[0]?.dataIndex;
-          const item = sorted[idx];
-          if (!item) return "";
+        formatter(info) {
+          const g = grouped.find((g) => g.groupName === info.name);
+          if (!g) return "";
+          const extremelySlow = g.items.filter(
+            (i) => i.slowMovementCategory === "Extremely Slow",
+          ).length;
+          const slowMoving = g.items.filter(
+            (i) => i.slowMovementCategory === "Slow-moving",
+          ).length;
+          const preview = g.items
+            .slice(0, 4)
+            .map(
+              (i) =>
+                `• ${i.itemName} (ratio: ${(Number(i.soldRatio) * 100).toFixed(2)}%)`,
+            )
+            .join("<br/>");
+          const more =
+            g.items.length > 4
+              ? `<br/><span style="color:#1565c0;font-style:italic">+${g.items.length - 4} more — click to see all</span>`
+              : "";
           return (
-            `<b>${item.itemName}</b><br/>` +
-            `Velocity: <b>${item.velocity} qty/day</b><br/>` +
-            `Aging: <b>${item.aging}d</b><br/>` +
-            `Stock: <b>${item.currentStock}</b><br/>` +
-            `<span style="color:#1565c0;font-style:italic;font-size:11px">Click for full details</span>`
+            `<b>${g.groupName}</b><br/>` +
+            `Items: <b>${g.items.length}</b><br/>` +
+            `Extremely Slow: <b style="color:#0d47a1">${extremelySlow}</b> &nbsp; Slow-moving: <b style="color:#1976d2">${slowMoving}</b><br/>` +
+            `${preview}${more}`
           );
         },
       },
-      legend: {
-        data: ["Velocity (qty/day)", "Aging (days)"],
-        top: 4,
-        right: 8,
-        textStyle: { color: "#333", fontSize: 10 },
-      },
-      grid: { top: 32, bottom: 8, left: 8, right: 55, containLabel: true },
-      xAxis: [
-        {
-          type: "value",
-          name: "Velocity (qty/day)",
-          nameTextStyle: { color: "#1565c0", fontSize: 10 },
-          axisLabel: { color: "#555", fontSize: 9 },
-          splitLine: { lineStyle: { type: "dashed", color: "#f0f0f0" } },
-          axisLine: { show: false },
-        },
-        {
-          type: "value",
-          name: "Aging (d)",
-          nameTextStyle: { color: "#e65100", fontSize: 10 },
-          axisLabel: { color: "#e65100", fontSize: 9 },
-          splitLine: { show: false },
-          axisLine: { show: false },
-          position: "top",
-        },
-      ],
-      yAxis: {
-        type: "category",
-        data: names,
-        axisLabel: {
-          color: "#333",
-          fontSize: 10,
-          width: 120,
-          overflow: "truncate",
-        },
-        axisLine: { lineStyle: { color: "#ddd" } },
-        axisTick: { show: false },
-      },
       series: [
         {
-          name: "Velocity (qty/day)",
-          type: "bar",
-          xAxisIndex: 0,
-          barWidth: 10,
+          type: "treemap",
+          width: "100%",
+          height: "100%",
+          roam: false,
+          nodeClick: "link",
           cursor: "pointer",
-          itemStyle: {
-            borderRadius: [0, 5, 5, 0],
-            color: (params) => {
-              const v = velocities[params.dataIndex];
-              if (v === 0) return "#b0bec5";
-              if (v < 0.05) return "#0d47a1";
-              if (v < 0.15) return "#1565c0";
-              if (v < 0.3) return "#1976d2";
-              return "#42a5f5";
-            },
-          },
           label: {
             show: true,
-            position: "right",
-            color: "#333",
-            fontSize: 9,
-            formatter: (p) => Number(p.value).toFixed(4),
+            formatter: (p) => `{name|${p.name}}\n{count|${p.value} items}`,
+            rich: {
+              name: {
+                fontSize: 11,
+                fontWeight: "bold",
+                color: "#fff",
+                lineHeight: 18,
+              },
+              count: {
+                fontSize: 10,
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 16,
+              },
+            },
           },
-          data: velocities,
-        },
-        {
-          name: "Aging (days)",
-          type: "bar",
-          xAxisIndex: 1,
-          barWidth: 4,
-          barGap: "60%",
-          cursor: "pointer",
+          upperLabel: { show: false },
           itemStyle: {
-            borderRadius: [0, 3, 3, 0],
-            color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-              { offset: 0, color: "#f5a623" },
-              { offset: 1, color: "#e65100" },
-            ]),
-            opacity: 0.5,
+            borderWidth: 2,
+            borderColor: "#fff",
+            gapWidth: 2,
           },
-          data: agings,
+          levels: [
+            {
+              itemStyle: {
+                borderWidth: 2,
+                borderColor: "#fff",
+                gapWidth: 2,
+              },
+              colorSaturation: [0.4, 0.8],
+            },
+          ],
+          colorBy: "data",
+          color: [
+            "#1565c0",
+            "#1976d2",
+            "#1e88e5",
+            "#2196f3",
+            "#42a5f5",
+            "#64b5f6",
+            "#0d47a1",
+            "#1a237e",
+            "#283593",
+            "#0288d1",
+            "#0277bd",
+            "#01579b",
+          ],
+          data: grouped.map((g) => ({
+            name: g.groupName,
+            value: g.items.length,
+          })),
         },
       ],
-    };
-  }, [sorted]);
+    }),
+    [grouped],
+  );
 
-  if (!sorted.length) {
+  if (!grouped.length) {
     return (
       <Box
         sx={{
@@ -1034,19 +1097,447 @@ const LowVelocityChart = ({ data, onBarClick }) => {
   }
 
   return (
-    <ReactECharts
-      echarts={echarts}
-      option={option}
-      notMerge
-      lazyUpdate
-      style={{ width: "100%", height: CHART_HEIGHT }}
-      onEvents={{
-        click: (params) => {
-          const item = sorted[params.dataIndex];
-          if (item) onBarClick(item, "VELOCITY");
-        },
-      }}
-    />
+    <>
+      <ReactECharts
+        echarts={echarts}
+        option={option}
+        notMerge
+        lazyUpdate
+        style={{ width: "100%", height: CHART_HEIGHT }}
+        onEvents={{
+          click: (params) => {
+            // ✅ treemap fires click with params.name = groupName
+            const g = grouped.find((g) => g.groupName === params.name);
+            if (g?.items.length) {
+              setModalData(g);
+              setModalOpen(true);
+            }
+          },
+        }}
+      />
+
+      {modalOpen && modalData && (
+        <LowVelocityGroupModal
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setModalData(null);
+          }}
+          group={modalData}
+          allGroups={grouped}
+        />
+      )}
+    </>
+  );
+};
+
+const LowVelocityGroupModal = ({ open, onClose, group, allGroups = [] }) => {
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeGroup, setActiveGroup] = useState(group);
+
+  useEffect(() => {
+    setActiveGroup(group);
+    setSearch("");
+    setCurrentPage(1);
+  }, [group]);
+
+  const handleGroupChange = (groupName) => {
+    const found = allGroups.find((g) => g.groupName === groupName);
+    if (found) {
+      setActiveGroup(found);
+      setSearch("");
+      setCurrentPage(1);
+    }
+  };
+
+  const filtered = useMemo(() => {
+    if (!activeGroup?.items) return [];
+    const q = search.trim().toLowerCase();
+    return !q
+      ? [...activeGroup.items]
+      : activeGroup.items.filter((i) => i.itemName.toLowerCase().includes(q));
+  }, [activeGroup, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / RECORDS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const currentRecords = filtered.slice(
+    (safePage - 1) * RECORDS_PER_PAGE,
+    safePage * RECORDS_PER_PAGE,
+  );
+
+  if (!open || !activeGroup) return null;
+
+  const downloadExcel = async () => {
+    if (!filtered.length) {
+      alert("No data");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Low Velocity Report");
+
+    worksheet.columns = [
+      { header: "S.No", key: "sno", width: 8 },
+      { header: "Item Name", key: "itemName", width: 60 },
+      { header: "UOM", key: "uom", width: 16 },
+      { header: "Total Inward Quantity", key: "totalQuantity", width: 22 },
+      { header: "Total Sold Quantity", key: "totalSold", width: 22 },
+      { header: "Balance Quantity", key: "balanceStock", width: 18 },
+      { header: "Sold Ratio", key: "soldRatio", width: 14 },
+      { header: "Category", key: "slowMovementCategory", width: 22 },
+    ];
+
+    worksheet.insertRow(1, [`Low Velocity Report`]);
+    worksheet.mergeCells("A1:H1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).height = 30;
+
+    addInsightsRowTurnOver({
+      worksheet,
+      startRow: 2,
+      totalColumns: 7,
+      localCompany: "HVM",
+      disableFinYear: true,
+      disableWeek: true,
+      dynamicField: "Item Group",
+      dynamicValue: activeGroup.groupName,
+    });
+
+    const headerRow = worksheet.getRow(3);
+    headerRow.height = 26;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9D9D9" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    filtered.forEach((item, idx) => {
+      const row = worksheet.addRow({
+        sno: idx + 1,
+        itemName: item.itemName,
+        uom: item.uom ?? "",
+        totalQuantity: Number(item.totalQuantity || 0),
+        totalSold: Number(item.totalSold || 0),
+        balanceStock: Number(item.balanceStock || 0),
+        soldRatio: Number(item.soldRatio || 0) * 100, // ✅ as percentage
+        slowMovementCategory: item.slowMovementCategory ?? "",
+      });
+
+      row.height = 22;
+      row.getCell("sno").alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      row.getCell("itemName").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("uom").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("totalQuantity").alignment = {
+        horizontal: "right",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("totalSold").alignment = {
+        horizontal: "right",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("balanceStock").alignment = {
+        horizontal: "right",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("soldRatio").alignment = {
+        horizontal: "right",
+        vertical: "middle",
+        indent: 1,
+      };
+      row.getCell("slowMovementCategory").alignment = {
+        horizontal: "left",
+        vertical: "middle",
+        indent: 1,
+      };
+
+      row.getCell("totalQuantity").numFmt = getExcelQtyFormatByUOM(item.uom);
+      row.getCell("totalSold").numFmt = getExcelQtyFormatByUOM(item.uom);
+      row.getCell("balanceStock").numFmt = getExcelQtyFormatByUOM(item.uom);
+      row.getCell("soldRatio").numFmt = '0.00"%"';
+
+      // ── category color ──
+      const cat = item.slowMovementCategory;
+      row.getCell("slowMovementCategory").font = {
+        bold: true,
+        color: { argb: cat === "Extremely Slow" ? "FFFF0000" : "FFFFA500" },
+      };
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFE0E0E0" } },
+          bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
+          left: { style: "thin", color: { argb: "FFE0E0E0" } },
+          right: { style: "thin", color: { argb: "FFE0E0E0" } },
+        };
+      });
+    });
+
+    const totalRow = worksheet.addRow({
+      sno: "",
+      itemName: `Total Items: ${filtered.length}`,
+      uom: "",
+      totalQuantity: "",
+      totalSold: "",
+      balanceStock: "",
+      soldRatio: "",
+      slowMovementCategory: "",
+    });
+    totalRow.height = 24;
+    totalRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { top: { style: "thin" } };
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 3 }];
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `Low Velocity Report ${activeGroup.groupName}.xlsx`,
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
+      <div className="bg-white w-[1370px] h-[634px] p-4 rounded-xl relative flex flex-col">
+        {/* ── HEADER ── */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold uppercase text-sm">
+              Low Velocity — <span className="text-blue-600"> HVM </span>
+            </h2>
+          </div>
+          <div className="flex gap-2 items-center">
+            <div className="bg-gray-300 rounded-lg shadow-2xl flex items-center gap-2 p-2">
+              <div className="w-20">
+                <select
+                  value={"HVM"}
+                  className="w-full px-2 py-1 text-xs border-2 rounded-md border-blue-600 transition-all duration-200"
+                >
+                  <option value="HVM">HVM</option>
+                </select>
+              </div>
+              <div className="w-60">
+                <select
+                  value={activeGroup.groupName}
+                  onChange={(e) => handleGroupChange(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border-2 rounded-md border-blue-600 transition-all duration-200 bg-white"
+                >
+                  {allGroups.map((g) => (
+                    <option key={g.groupName} value={g.groupName}>
+                      {g.groupName} ({g.items.length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              className="text-red-600 hover:text-red-800"
+              onClick={onClose}
+            >
+              <FaTimes size={16} />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs font-semibold text-gray-600 mb-1">
+          Total Items :{" "}
+          <span className="text-xs font-semibold px-2 rounded-full">
+            {activeGroup.items.length}
+          </span>
+        </p>
+
+        {/* ── SEARCH + EXCEL ── */}
+        <div className="flex items-center gap-3 mt-1 mb-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search item name..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          {search && (
+            <span className="text-[11px] text-gray-500">
+              {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+            </span>
+          )}
+          <button
+            onClick={downloadExcel}
+            className="ml-auto p-0 rounded-full shadow-md hover:brightness-110 transition-all duration-300"
+            title="Download Excel"
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/732/732220.png"
+              alt="Download Excel"
+              className="w-7 h-7 rounded-lg"
+            />
+          </button>
+        </div>
+
+        {/* ── TABLE ── */}
+        <div className="flex-1 overflow-hidden">
+          <div
+            className="overflow-x-auto overflow-y-auto h-full border border-gray-300"
+            style={{ border: "1px solid gray", borderRadius: "16px" }}
+          >
+            <table className="w-full border-collapse text-[11px] table-fixed">
+              <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10 tracking-wider">
+                <tr>
+                  <th className="border p-1 text-center w-8">S.No</th>
+                  <th className="border p-1 text-center w-72">Item Name</th>
+                  <th className="border p-1 text-center w-20">UOM</th>
+                  <th className="border p-1 text-center w-40">
+                    Total Inward Quantity
+                  </th>
+                  <th className="border p-1 text-center w-40">
+                    Total Sold Quantity
+                  </th>
+                  <th className="border p-1 text-center w-32">
+                    Balance Quantity
+                  </th>
+                  <th className="border p-1 text-center w-20">Sold Ratio</th>
+                  <th className="border p-1 text-center w-28">Category</th>
+                  <th className="border p-1 text-center w-auto"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRecords.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="text-center py-6 text-gray-400 text-[11px]"
+                    >
+                      No items found
+                    </td>
+                  </tr>
+                ) : (
+                  currentRecords.map((item, idx) => {
+                    const serialNo =
+                      (safePage - 1) * RECORDS_PER_PAGE + idx + 1;
+                    const isExtreme =
+                      item.slowMovementCategory === "Extremely Slow";
+                    return (
+                      <tr
+                        key={idx}
+                        className="text-gray-800 bg-white text-[11px] even:bg-gray-50  transition-colors"
+                      >
+                        <td className="border p-1 text-center text-gray-800">
+                          {serialNo}
+                        </td>
+                        <td className="border p-1 pl-2 text-left">
+                          {item.itemName}
+                        </td>
+                        <td className="border p-1 pl-2 text-left">
+                          {item.uom}
+                        </td>
+                        <td className="border p-1 text-right pr-2">
+                          {formatQtyByUOM(item.totalQuantity, item.uom)}
+                        </td>
+                        <td className="border p-1 text-right pr-2">
+                          {formatQtyByUOM(item.totalSold, item.uom)}
+                        </td>
+                        <td className="border p-1 text-right pr-2">
+                          {formatQtyByUOM(item.balanceStock, item.uom)}
+                        </td>
+                        <td className="border p-1 text-right pr-2">
+                          {Number(item.soldRatio * 100).toFixed(2)} %
+                        </td>
+                        <td className="border p-1 text-left pl-1">
+                          <span
+                            style={{ color: isExtreme ? "red" : "orange" }}
+                            className="text-[11px]"
+                          >
+                            {item.slowMovementCategory}
+                          </span>
+                        </td>
+                        <td className="border p-1 text-center text-gray-400"></td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ── PAGINATION ── */}
+        <div className="flex justify-between items-center mt-2 text-[11px]">
+          <span className="text-gray-400 text-xs">
+            Showing {currentRecords.length} of {filtered.length} item
+            {filtered.length !== 1 ? "s" : ""}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-md ${safePage === 1 ? "text-gray-300 cursor-not-allowed" : "text-blue-600 hover:bg-gray-100"}`}
+            >
+              <FaStepBackward size={13} />
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={safePage === 1}
+              className={`p-1.5 rounded-md ${safePage === 1 ? "text-gray-300 cursor-not-allowed" : "text-blue-600 hover:bg-gray-100"}`}
+            >
+              <FaChevronLeft size={13} />
+            </button>
+            <span className="text-xs font-semibold px-2">
+              Page {safePage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-md ${safePage === totalPages ? "text-gray-300 cursor-not-allowed" : "text-blue-600 hover:bg-gray-100"}`}
+            >
+              <FaChevronRight size={13} />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safePage === totalPages}
+              className={`p-1.5 rounded-md ${safePage === totalPages ? "text-gray-300 cursor-not-allowed" : "text-blue-600 hover:bg-gray-100"}`}
+            >
+              <FaStepForward size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1227,15 +1718,22 @@ const DeadStockChart = ({ data }) => {
     </>
   );
 };
+
 const DeadStockGroupModal = ({ open, onClose, group, allGroups = [] }) => {
-  const [search, setSearch] = useState("");
+  const [itemNameSearch, setItemNameSearch] = useState("");
+  const [docSearch, setDocSearch] = useState("");
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [rackSearch, setRackSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeGroup, setActiveGroup] = useState(group); // ✅ local group state
 
   // ── sync when parent group changes ──
   useEffect(() => {
     setActiveGroup(group);
-    setSearch("");
+    setItemNameSearch("");
+    setDocSearch("");
+    setSupplierSearch("");
+    setRackSearch("");
     setCurrentPage(1);
   }, [group]);
 
@@ -1244,18 +1742,45 @@ const DeadStockGroupModal = ({ open, onClose, group, allGroups = [] }) => {
     const found = allGroups.find((g) => g.groupName === groupName);
     if (found) {
       setActiveGroup(found);
-      setSearch("");
+      setItemNameSearch("");
+      setDocSearch("");
+      setSupplierSearch("");
+      setRackSearch("");
       setCurrentPage(1);
     }
   };
 
   const filtered = useMemo(() => {
     if (!activeGroup?.items) return [];
-    const q = search.trim().toLowerCase();
-    return !q
-      ? [...activeGroup.items]
-      : activeGroup.items.filter((i) => i.itemName.toLowerCase().includes(q));
-  }, [activeGroup, search]);
+
+    let result = [...activeGroup.items];
+
+    if (itemNameSearch.trim()) {
+      const q = itemNameSearch.toLowerCase();
+      result = result.filter((i) => i.itemName?.toLowerCase().includes(q));
+    }
+
+    if (docSearch.trim()) {
+      const q = docSearch.toLowerCase();
+      result = result.filter((i) =>
+        String(i.docId || "")
+          .toLowerCase()
+          .includes(q),
+      );
+    }
+
+    if (supplierSearch.trim()) {
+      const q = supplierSearch.toLowerCase();
+      result = result.filter((i) => i.supplierName?.toLowerCase().includes(q));
+    }
+
+    if (rackSearch.trim()) {
+      const q = rackSearch.toLowerCase();
+      result = result.filter((i) => i.rackNo?.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [activeGroup, itemNameSearch, docSearch, supplierSearch, rackSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / RECORDS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
@@ -1475,10 +2000,52 @@ const DeadStockGroupModal = ({ open, onClose, group, allGroups = [] }) => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search item name..."
-              value={search}
+              placeholder="Item Name..."
+              value={itemNameSearch}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setItemNameSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Doc No..."
+              value={docSearch}
+              onChange={(e) => {
+                setDocSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Supplier..."
+              value={supplierSearch}
+              onChange={(e) => {
+                setSupplierSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg
+                         focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm w-52"
+            />
+            <FaSearch className="absolute left-2 top-1.5 text-gray-400 text-[11px]" />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Rack No..."
+              value={rackSearch}
+              onChange={(e) => {
+                setRackSearch(e.target.value);
                 setCurrentPage(1);
               }}
               className="h-6 p-1 pl-7 text-gray-900 text-[11px] border border-gray-300 rounded-lg

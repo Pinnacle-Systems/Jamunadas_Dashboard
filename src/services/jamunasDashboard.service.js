@@ -955,15 +955,13 @@ export async function getSlowMovement(req, res) {
     const result = await pool.query(
       `SELECT 
   a.docdate,
+  a.docid,
   a.finyear,
     a.itemname, 
     a.itemgroup,
     SUM(a.qty) AS current_stock, 
-    
-    MAX(CASE WHEN a.qty < 0 THEN a.docdate END) AS last_sale_date,
-
-    -- fallback to last movement if no sale
-    DATEDIFF(
+     MAX(CASE WHEN a.qty < 0 THEN a.docdate END) AS last_sale_date,
+DATEDIFF(
         CURDATE(), 
         COALESCE(
             MAX(CASE WHEN a.qty < 0 THEN a.docdate END),
@@ -984,6 +982,7 @@ HAVING
 
     const resp = result.map((sale) => ({
       docDate: sale.docdate,
+      docId:sale.docid,
       salesYear: sale.finyear,
       aging: sale.ageing ?? 0,
       itemName: sale.itemname,
@@ -1004,120 +1003,76 @@ export async function getLowVelocityItems(req, res) {
   const pool = getJDASConnectionPool();
 
   try {
-    const { selectedYear } = req.query;
+    const { selectedCompany, selectedYear } = req.query;
 
-    if (!selectedYear) {
-      return res
-        .status(400)
-        .json({ statusCode: 1, error: "selectedYear is required" });
-    }
+    console.log(selectedCompany, "req.query for getLowVelocityItems");
 
-    // e.g. selectedYear = "25-26"  →  yearStart = "2025-04-01", yearEnd = "2026-03-31"
-    const yearPrefix = "20" + selectedYear.split("-")[0]; // "2025"
-    const nextYearPrefix = "20" + selectedYear.split("-")[1]; // "2026"
-    const yearStart = `${yearPrefix}-04-01`;
-    const yearEnd = `${nextYearPrefix}-03-31`;
+    const result = await pool.query(
+      `SELECT
+    itemname,itemgroup,uom,
+    SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END) AS total_inwarded,
+    SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) AS total_sold,
+    SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END)
+      - SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) AS balance_stock,
+    ROUND(
+      SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END)
+      / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END),0),
+      4
+    ) AS sold_ratio,
+    CASE 
+        WHEN (SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) 
+              / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END), 0)) < 0.10
+        THEN 'Extremely Slow'
+        WHEN (SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) 
+              / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END), 0)) BETWEEN  0.10 AND 0.20
+        THEN 'Slow-moving'
+        ELSE NULL
+    END AS slow_movement_category
+FROM dtstorestkmast
+WHERE transtype IN ('Purchase Inward','Sales Invoice')
+GROUP BY itemname
+HAVING 
+    (SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END)
+      - SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END)) > 0
+  AND SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) > 0
+  AND (
+        (SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) 
+          / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END), 0)) < 0.10
+      )
+ORDER BY 
+    CASE 
+        WHEN (SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) 
+              / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END), 0)) < 0.05
+        THEN 1
+        WHEN (SUM(CASE WHEN transtype = 'Sales Invoice' THEN ABS(qty) ELSE 0 END) 
+              / NULLIF(SUM(CASE WHEN transtype = 'Purchase Inward' THEN qty ELSE 0 END), 0)) BETWEEN 0.05 AND 0.10
+        THEN 2
+    END,
+    balance_stock DESC;
+   
 
-    // Number of days in financial year window (used as denominator for velocity)
-    // DATEDIFF(yearEnd, yearStart) = 364 days for a normal year
-    const query = `
-      SELECT
-          a.itemname,
- 
-          /* current stock on hand */
-          SUM(a.qty)                                          AS current_stock,
- 
-          /* movement dates */
-          MAX(a.docdate)                                      AS last_movement_date,
-          MAX(CASE WHEN a.qty < 0 THEN a.docdate END)        AS last_sale_date,
- 
-          /* ageing: days since last sale or last movement */
-          DATEDIFF(
-            CURDATE(),
-            COALESCE(
-              MAX(CASE WHEN a.qty < 0 THEN a.docdate END),
-              MAX(a.docdate)
-            )
-          )                                                   AS ageing,
- 
-          /* total qty sold in the financial year */
-          SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) AS total_qty_sold,
- 
-          /* number of active days = DATEDIFF between first and last movement */
-          NULLIF(DATEDIFF(MAX(a.created_on), MIN(a.created_on)), 0) AS active_days,
- 
-          /* velocity = total sales / number of days in year window */
-          SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) /
-          NULLIF(
-            DATEDIFF(?, ?),   -- yearEnd, yearStart  (fixed year window)
-            0
-          )                                                   AS velocity,
- 
-          /* days to clear remaining stock at current velocity */
-          CASE
-            WHEN SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) = 0
-            THEN NULL
-            ELSE
-              SUM(a.qty) /
-              NULLIF(
-                SUM(CASE WHEN a.qty < 0 THEN ABS(a.qty) ELSE 0 END) /
-                NULLIF(DATEDIFF(?, ?), 0),
-                0
-              )
-          END                                                 AS daysToClear
- 
-      FROM dtstorestkmast a
- 
-      WHERE a.created_on >= ?
-        AND a.created_on <= ?
- 
-      GROUP BY a.itemname
- 
-     HAVING current_stock > 0
-   AND total_qty_sold > 0
-   AND velocity IS NOT NULL
-   AND velocity < 0.5
- 
-      ORDER BY velocity ASC, ageing DESC
- 
-      LIMIT 100;
-    `;
+      `,
+      [selectedYear], // ✅ positional params
+    );
 
-    // params order matches the ? placeholders above
-    const params = [
-      yearEnd,
-      yearStart, // DATEDIFF for velocity denominator
-      yearEnd,
-      yearStart, // DATEDIFF for daysToClear denominator
-      yearStart,
-      yearEnd, // WHERE created_on range
-    ];
-
-    const result = await pool.query(query, params);
-
-    const resp = result.map((row) => ({
-      itemName: row.itemname,
-      currentStock: Number(row.current_stock) || 0,
-      aging: Number(row.ageing) || 0,
-      lastSaleDate: row.last_sale_date ?? null,
-      lastMovementDate: row.last_movement_date ?? null,
-      totalQtySold: Number(row.total_qty_sold) || 0,
-      activeDays: Number(row.active_days) || 0,
-      velocity: row.velocity
-        ? Number(row.velocity).toFixed(4) // 4dp for precision
-        : "0.0000",
-      daysToClear: row.daysToClear ? Number(row.daysToClear).toFixed(2) : null,
-      deadStockFlag: null, // always null here — these are low velocity, not dead
+    const resp = result.map((sale) => ({
+      totalQuantity: sale.total_inwarded,
+      totalSold:sale.total_sold,
+      balanceStock: sale.balance_stock,
+      soldRatio: sale.sold_ratio,
+      itemName: sale.itemname,
+      slowMovementCategory: sale.slow_movement_category,
+      itemGroup:sale.itemgroup,
+      uom:sale.uom
     }));
 
-    console.log("getLowVelocityItems resp:", resp.length, "items");
+    console.log(result, "result for jamunadas getLowVelocityItems");
+    console.log(resp, "resp for jamunadas getLowVelocityItems");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
-    console.error("Error retrieving low velocity items:", err);
-    return res
-      .status(500)
-      .json({ statusCode: 1, error: "Internal Server Error" });
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
 
