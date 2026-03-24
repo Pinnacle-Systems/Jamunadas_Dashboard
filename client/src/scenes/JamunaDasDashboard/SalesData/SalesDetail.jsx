@@ -16,6 +16,7 @@ import StyleTop10Daily from "./StyletopTendaily.jsx";
 import TopMonthSales from "./TopMonthSales.jsx";
 import TopWeekSales from "./TopWeekSales.jsx";
 import SlowMovement from "./SlowMovement.jsx";
+import AverageIncome from "./AverageSales.jsx";
 const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
   console.log(selectedFilter, "selectedFilter");
 
@@ -92,10 +93,11 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
                   <Grid item md={4}>
                     <button
                       onClick={() => setFilterType("B2B")}
-                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${filterType === "B2B"
+                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${
+                        filterType === "B2B"
                           ? "bg-blue-600 text-white scale-105"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
+                      }`}
                     >
                       B2B
                     </button>
@@ -105,10 +107,11 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
                   <Grid item md={4}>
                     <button
                       onClick={() => setFilterType("B2C")}
-                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${filterType === "B2C"
+                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${
+                        filterType === "B2C"
                           ? "bg-blue-600 text-white scale-105"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
+                      }`}
                     >
                       B2C
                     </button>
@@ -118,10 +121,11 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
                   <Grid item md={4}>
                     <button
                       onClick={() => setFilterType("ALL")}
-                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${filterType === "ALL"
+                      className={`flex items-center gap-2 px-5 py-2 text-[12px] font-semibold rounded-full shadow-md transition-all ${
+                        filterType === "ALL"
                           ? "bg-blue-600 text-white scale-105"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
+                      }`}
                     >
                       All
                     </button>
@@ -302,6 +306,18 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
       </Grid>
       <Grid container>
         <Grid item xs={12} md={12}>
+          <AverageIncome
+            finYrData={finYrData}
+            yearFilter={yearFilter}
+            selectedCompany={company}
+            setYearFilter={setYearFilter}
+            filterType={filterType}
+            setFilterType={setFilterType}
+          />
+        </Grid>
+      </Grid>
+      <Grid container>
+        <Grid item xs={12} md={12}>
           <SlowMovement
             finYrData={finYrData}
             yearFilter={yearFilter}
@@ -311,7 +327,6 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
             setFilterType={setFilterType}
           />
         </Grid>
-
       </Grid>
     </>
   );

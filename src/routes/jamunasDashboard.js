@@ -13,7 +13,7 @@ import {
   getTopTenItemYear,
   getTopTenItemMonth,
   getTopTenItemWeek,
-  getTopTenItemToday, getTopItemMonth, getTopItemsWeek, getSlowMovement,getLowVelocityItems,getDeadStockItems
+  getTopTenItemToday, getTopItemMonth, getTopItemsWeek, getSlowMovement,getLowVelocityItems,getDeadStockItems,getAverageIncome
 } from "../services/jamunasDashboard.service.js";
 
 import {
@@ -27,7 +27,7 @@ import {
   getTopTenCustomerSalesWeekTable,
   getTopTenCustomerSalesdailyTable,
   getTopTenItemSalesWeekTable,
-  getTopTenItemSalesdailyTable, getTopItemSalesWeekTable
+  getTopTenItemSalesdailyTable, getTopItemSalesWeekTable,getAverageIncomeTable
 
 } from "../services/jamunasDashboardTable.service.js";
 
@@ -63,5 +63,7 @@ router.get("/topItemWeekTable", getTopItemSalesWeekTable);
 router.get("/slowMovingItems", getSlowMovement);
 router.get("/slowMovingItemsByVelocity", getLowVelocityItems);
 router.get("/deadStock", getDeadStockItems);
+router.get("/averageIncome", getAverageIncome);
+router.get("/averageIncomeTable", getAverageIncomeTable);
 
 export default router;

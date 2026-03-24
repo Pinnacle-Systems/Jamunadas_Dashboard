@@ -11,8 +11,8 @@ SELECT A.FINYR FROM gtfinancialyear A ORDER BY 1    `;
     let resp = result?.map((row) => ({
       finYear: row.FINYR,
     }));
-    console.log(sql, "Jamunadas finyear query executed");
-    console.log(resp, "Jamunadas resp");
+    // console.log(sql, "Jamunadas finyear query executed");
+    // console.log(resp, "Jamunadas resp");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -43,8 +43,8 @@ order by salesyear
       totalSales: sale.totalsales,
       company: sale.company,
     }));
-    console.log(result, "getTotalSales output");
-    console.log(resp, "resp");
+    // console.log(result, "getTotalSales output");
+    // console.log(resp, "resp");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -52,18 +52,19 @@ order by salesyear
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
+
 export async function getMonthlySales(req, res) {
   const pool = getJDASConnectionPool();
 
   try {
     const { selectedCompany, selectedYear, type } = req.query;
 
-    console.log(
-      selectedCompany,
-      selectedYear,
-      type,
-      "req.query for getMonthlySales",
-    );
+    // console.log(
+    //   selectedCompany,
+    //   selectedYear,
+    //   type,
+    //   "req.query for getMonthlySales",
+    // );
 
     //     const result = await pool.query(
     //         `
@@ -136,8 +137,8 @@ export async function getMonthlySales(req, res) {
       company: sale.compcode,
     }));
 
-    console.log(result, "result for jamunadas getMonthlySales");
-    console.log(resp, "resp for jamunadas getMonthlySales");
+    // console.log(result, "result for jamunadas getMonthlySales");
+    // console.log(resp, "resp for jamunadas getMonthlySales");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -151,12 +152,12 @@ export async function getQuarterSales(req, res) {
   try {
     const { selectedCompany, selectedYear, type } = req.query;
 
-    console.log(
-      selectedCompany,
-      selectedYear,
-      type,
-      "req.query for getQuarterSales",
-    );
+    // console.log(
+    //   selectedCompany,
+    //   selectedYear,
+    //   type,
+    //   "req.query for getQuarterSales",
+    // );
 
     const result = await pool.query(
       `
@@ -199,8 +200,8 @@ order by e.pstartdate
       order: sale.perioddesc,
     }));
 
-    console.log(result, "result for jamunadas getQuarterSales");
-    console.log(resp, "resp for jamunadas getQuarterSales");
+    // console.log(result, "result for jamunadas getQuarterSales");
+    // console.log(resp, "resp for jamunadas getQuarterSales");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -214,7 +215,7 @@ export async function getYearlySales(req, res) {
   try {
     const { selectedCompany, year, type } = req.query;
 
-    console.log(selectedCompany, year, "req.query for getYearlySales");
+    // console.log(selectedCompany, year, "req.query for getYearlySales");
 
     const result = await pool.query(
       `
@@ -255,8 +256,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getYearlySales");
-    console.log(resp, "resp for jamunadas getYearlySales");
+    // console.log(result, "result for jamunadas getYearlySales");
+    // console.log(resp, "resp for jamunadas getYearlySales");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -273,11 +274,11 @@ export async function getTopTenCustomer(req, res) {
   try {
     const { selectedCompany, selectedYear, type } = req.query;
 
-    console.log(
-      selectedCompany,
-      selectedYear,
-      "req.query for getTopTenCustomer",
-    );
+    // console.log(
+    //   selectedCompany,
+    //   selectedYear,
+    //   "req.query for getTopTenCustomer",
+    // );
 
     const result = await pool.query(
       `
@@ -317,8 +318,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomer");
-    console.log(resp, "resp for jamunadas getTopTenCustomer");
+    // console.log(result, "result for jamunadas getTopTenCustomer");
+    // console.log(resp, "resp for jamunadas getTopTenCustomer");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -332,11 +333,11 @@ export async function getTopTenCustomerMonth(req, res) {
   try {
     const { selectedCompany, selectedYear, selectMonths, type } = req.query;
 
-    console.log(
-      selectedCompany,
-      selectedYear,
-      "req.query for getTopTenCustomerMonth",
-    );
+    // console.log(
+    //   selectedCompany,
+    //   selectedYear,
+    //   "req.query for getTopTenCustomerMonth",
+    // );
 
     const result = await pool.query(
       `
@@ -377,8 +378,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomerMonth");
-    console.log(resp, "resp for jamunadas getTopTenCustomerMonth");
+    // console.log(result, "result for jamunadas getTopTenCustomerMonth");
+    // console.log(resp, "resp for jamunadas getTopTenCustomerMonth");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -392,7 +393,7 @@ export async function getTopTenCustomerWeek(req, res) {
   try {
     const { selectedCompany, selectedYear, selectMonths, type } = req.query;
 
-    console.log(selectedCompany, "req.query for getTopTenCustomerMonth");
+    // console.log(selectedCompany, "req.query for getTopTenCustomerMonth");
 
     const result = await pool.query(
       `
@@ -433,8 +434,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomerWeek");
-    console.log(resp, "resp for jamunadas getTopTenCustomerWeek");
+    // console.log(result, "result for jamunadas getTopTenCustomerWeek");
+    // console.log(resp, "resp for jamunadas getTopTenCustomerWeek");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -489,8 +490,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomerToday");
-    console.log(resp, "resp for jamunadas getTopTenCustomerToday");
+    // console.log(result, "result for jamunadas getTopTenCustomerToday");
+    // console.log(resp, "resp for jamunadas getTopTenCustomerToday");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -499,7 +500,7 @@ limit 10
   }
 }
 
-// Item Wise
+// Top Items Year,month,week,today
 export async function getTopTenItemYear(req, res) {
   const pool = getJDASConnectionPool();
 
@@ -548,8 +549,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenItemYear");
-    console.log(resp, "resp for jamunadas getTopTenItemYear");
+    // console.log(result, "result for jamunadas getTopTenItemYear");
+    // console.log(resp, "resp for jamunadas getTopTenItemYear");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -609,8 +610,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenItemMonth");
-    console.log(resp, "resp for jamunadas getTopTenItemMonth");
+    // console.log(result, "result for jamunadas getTopTenItemMonth");
+    // console.log(resp, "resp for jamunadas getTopTenItemMonth");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -663,8 +664,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenItemWeek");
-    console.log(resp, "resp for jamunadas getTopTenItemWeek");
+    // console.log(result, "result for jamunadas getTopTenItemWeek");
+    // console.log(resp, "resp for jamunadas getTopTenItemWeek");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -718,8 +719,8 @@ limit 10
       totalSales: sale.totalsales,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomerToday");
-    console.log(resp, "resp for jamunadas getTopTenCustomerToday");
+    // console.log(result, "result for jamunadas getTopTenCustomerToday");
+    // console.log(resp, "resp for jamunadas getTopTenCustomerToday");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -727,6 +728,8 @@ limit 10
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
+
+// Top Item Month and Week
 
 export async function getTopItemMonth(req, res) {
   const pool = getJDASConnectionPool();
@@ -803,8 +806,8 @@ limit 1
       uom: sale.unitname,
     }));
 
-    console.log(result, "result for jamunadas getTopTenCustomerMonth");
-    console.log(resp, "resp for jamunadas getTopTenCustomerMonth");
+    // console.log(result, "result for jamunadas getTopTenCustomerMonth");
+    // console.log(resp, "resp for jamunadas getTopTenCustomerMonth");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -934,8 +937,8 @@ ORDER BY weekstartdate;
       uom: sale.unitname,
     }));
 
-    console.log(result, "result for jamunadas getTopItemsWeek");
-    console.log(resp, "resp for jamunadas getTopItemsWeek");
+    // console.log(result, "result for jamunadas getTopItemsWeek");
+    // console.log(resp, "resp for jamunadas getTopItemsWeek");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -943,6 +946,8 @@ ORDER BY weekstartdate;
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }
+
+// Slow Movement
 
 export async function getSlowMovement(req, res) {
   const pool = getJDASConnectionPool();
@@ -982,15 +987,15 @@ HAVING
 
     const resp = result.map((sale) => ({
       docDate: sale.docdate,
-      docId:sale.docid,
+      docId: sale.docid,
       salesYear: sale.finyear,
       aging: sale.ageing ?? 0,
       itemName: sale.itemname,
       itemGroup: sale.itemgroup,
     }));
 
-    console.log(result, "result for jamunadas getSlowMovement");
-    console.log(resp, "resp for jamunadas getSlowMovement");
+    // console.log(result, "result for jamunadas getSlowMovement");
+    // console.log(resp, "resp for jamunadas getSlowMovement");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -1057,17 +1062,17 @@ ORDER BY
 
     const resp = result.map((sale) => ({
       totalQuantity: sale.total_inwarded,
-      totalSold:sale.total_sold,
+      totalSold: sale.total_sold,
       balanceStock: sale.balance_stock,
       soldRatio: sale.sold_ratio,
       itemName: sale.itemname,
       slowMovementCategory: sale.slow_movement_category,
-      itemGroup:sale.itemgroup,
-      uom:sale.uom
+      itemGroup: sale.itemgroup,
+      uom: sale.uom,
     }));
 
-    console.log(result, "result for jamunadas getLowVelocityItems");
-    console.log(resp, "resp for jamunadas getLowVelocityItems");
+    // console.log(result, "result for jamunadas getLowVelocityItems");
+    // console.log(resp, "resp for jamunadas getLowVelocityItems");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -1115,7 +1120,7 @@ ORDER BY a.itemgroup, a.itemname;
       rackNo: row.rackno,
     }));
 
-    console.log("getDeadStockItems resp:", resp.length, "items");
+    // console.log("getDeadStockItems resp:", resp.length, "items");
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
@@ -1123,5 +1128,74 @@ ORDER BY a.itemgroup, a.itemname;
     return res
       .status(500)
       .json({ statusCode: 1, error: "Internal Server Error" });
+  }
+}
+
+// Average Income
+
+export async function getAverageIncome(req, res) {
+  const pool = getJDASConnectionPool();
+
+  try {
+    const { selectedCompany, selectedYear, page = 1, limit = 25 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT v.itemgroup) AS total
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN dtitemgrpmast v ON v.dtitemgrpmastid = b.itemgroup
+      JOIN gtcompmast e ON e.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      WHERE e.compcode = ?
+        AND d.finyr = ?
+    `;
+
+    const dataQuery = `
+      SELECT 
+        v.itemgroup AS itemgroup_name,
+        AVG(ROUND(a.netamt * (b.amount / a.gramt), 2)) AS avg_sales
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN dtitemgrpmast v ON v.dtitemgrpmastid = b.itemgroup
+      JOIN gtcompmast e ON e.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d ON d.gtfinancialyearid = a.finyear
+      WHERE e.compcode = ?
+        AND d.finyr = ?
+      GROUP BY v.itemgroup
+      ORDER BY avg_sales DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const [countResult, dataResult] = await Promise.all([
+      pool.query(countQuery, [selectedCompany, selectedYear]),
+      pool.query(dataQuery, [
+        selectedCompany,
+        selectedYear,
+        Number(limit),
+        offset,
+      ]),
+    ]);
+
+    const total = countResult[0]?.total || 0;
+
+    const resp = dataResult.map((sale) => ({
+      itemGroup: sale.itemgroup_name,
+      avg: sale.avg_sales,
+    }));
+    console.log(resp,"resp for getAverageIncome");
+    return res.json({
+      statusCode: 0,
+      data: resp,
+      pagination: {
+        total: Number(total),
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(Number(total) / Number(limit)),
+      },
+    });
+  } catch (err) {
+    console.error("Error retrieving data: ", err);
+    res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
   }
 }

@@ -411,6 +411,32 @@ const JamunasDashboard = createApi({
       },
       providesTags: ["JamunasDashboard"],
     }),
+    getAverageIncome: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/averageIncome",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
+    getAverageIncomeTable: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/averageIncomeTable",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
   }),
 });
 
@@ -444,7 +470,7 @@ export const {
   useGetTopItemWeekTableQuery,
   useGetSlowMovingItemsQuery,
   useGetSlowMovingItemsByVelocityQuery,
-  useGetDeadStockQuery
+  useGetDeadStockQuery,useGetAverageIncomeQuery,useGetAverageIncomeTableQuery
 } = JamunasDashboard;
 
 export default JamunasDashboard;
