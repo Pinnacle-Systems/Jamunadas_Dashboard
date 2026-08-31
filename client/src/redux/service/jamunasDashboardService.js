@@ -190,6 +190,22 @@ const JamunasDashboard = createApi({
       },
       providesTags: ["JamunasDashboard"],
     }),
+    getLowestHighestMovement: builder.query({
+      query: ({ params }) => {
+        return {
+          url: JAMUNAS_DASHBOARD + "/getLowestHighestMovement",
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["JamunasDashboard"],
+    }),
+
+    //table
+
     getMonthlySalesTable: builder.query({
       query: ({ params }) => {
         return {
@@ -470,7 +486,10 @@ export const {
   useGetTopItemWeekTableQuery,
   useGetSlowMovingItemsQuery,
   useGetSlowMovingItemsByVelocityQuery,
-  useGetDeadStockQuery,useGetAverageIncomeQuery,useGetAverageIncomeTableQuery
+  useGetDeadStockQuery,
+  useGetAverageIncomeQuery,
+  useGetAverageIncomeTableQuery,
+  useGetLowestHighestMovementQuery,
 } = JamunasDashboard;
 
 export default JamunasDashboard;

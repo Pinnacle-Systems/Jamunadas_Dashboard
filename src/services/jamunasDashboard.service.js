@@ -1183,7 +1183,7 @@ export async function getAverageIncome(req, res) {
       itemGroup: sale.itemgroup_name,
       avg: sale.avg_sales,
     }));
-    console.log(resp,"resp for getAverageIncome");
+    console.log(resp, "resp for getAverageIncome");
     return res.json({
       statusCode: 0,
       data: resp,
@@ -1197,5 +1197,181 @@ export async function getAverageIncome(req, res) {
   } catch (err) {
     console.error("Error retrieving data: ", err);
     res.status(500).json({ statusCode: 1, error: "Internal Server Error" });
+  }
+}
+
+export async function getLowestandHighest(req, res) {
+  const pool = getJDASConnectionPool();
+
+  try {
+    const { selectedYear, compcode } = req.query;
+
+    if (!selectedYear) {
+      return res.status(400).json({
+        statusCode: 1,
+        error: "selectedYear is required",
+      });
+    }
+
+    if (!compcode) {
+      return res.status(400).json({
+        statusCode: 1,
+        error: "compcode is required",
+      });
+    }
+
+    // 1. Lowest Sales Period
+    const lowestSalesPeriodQuery = `
+      SELECT
+        e.payperiod,
+        SUM(b.delqty * a.netamt) AS totalsales
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b
+        ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast c
+        ON c.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d
+        ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e
+        ON e.gtfinancialyearid = d.gtfinancialyearid
+      WHERE c.compcode = ?
+        AND d.finyr = ?
+        AND a.docdate BETWEEN e.mstdt AND e.mendt
+      GROUP BY e.mstdt, e.payperiod
+      ORDER BY totalsales ASC
+      LIMIT 1
+    `;
+
+    // 2. Highest Sales Period
+    const highestSalesPeriodQuery = `
+      SELECT
+        e.payperiod,
+        SUM(b.delqty * a.netamt) AS totalsales
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b
+        ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast c
+        ON c.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d
+        ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq e
+        ON e.gtfinancialyearid = d.gtfinancialyearid
+      WHERE c.compcode = ?
+        AND d.finyr = ?
+        AND a.docdate BETWEEN e.mstdt AND e.mendt
+      GROUP BY e.mstdt, e.payperiod
+      ORDER BY totalsales DESC
+      LIMIT 1
+    `;
+
+    // 3. Highest Sales Item
+    const highestSalesItemQuery = `
+      SELECT
+        d.finyr,
+        c.itemname,
+        SUM(b.delqty * a.netamt) AS totalsales
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b
+        ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast e
+        ON e.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d
+        ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq f
+        ON f.gtfinancialyearid = d.gtfinancialyearid
+      JOIN gtitemmast c
+        ON c.gtitemmastid = b.itemname
+      WHERE e.compcode = ?
+        AND d.finyr = ?
+        AND a.docdate BETWEEN f.mstdt AND f.mendt
+      GROUP BY d.finyr, c.itemname
+      ORDER BY totalsales DESC
+      LIMIT 1
+    `;
+
+    // 4. Lowest Sales Item
+    const lowestSalesItemQuery = `
+      SELECT
+        d.finyr,
+        c.itemname,
+        SUM(b.delqty * a.netamt) AS totalsales
+      FROM gtsalesinv a
+      JOIN gtsalesinvdet b
+        ON b.gtsalesinvid = a.gtsalesinvid
+      JOIN gtcompmast e
+        ON e.gtcompmastid = a.compcode
+      JOIN gtfinancialyear d
+        ON d.gtfinancialyearid = a.finyear
+      JOIN hrmfrq f
+        ON f.gtfinancialyearid = d.gtfinancialyearid
+      JOIN gtitemmast c
+        ON c.gtitemmastid = b.itemname
+      WHERE e.compcode = ?
+        AND d.finyr = ?
+        AND a.docdate BETWEEN f.mstdt AND f.mendt
+      GROUP BY d.finyr, c.itemname
+      ORDER BY totalsales ASC
+      LIMIT 1
+    `;
+
+    // Execute all four queries simultaneously
+    const [
+      lowestSalesPeriodResult,
+      highestSalesPeriodResult,
+      highestSalesItemResult,
+      lowestSalesItemResult,
+    ] = await Promise.all([
+      pool.query(lowestSalesPeriodQuery, [compcode, selectedYear]),
+      pool.query(highestSalesPeriodQuery, [compcode, selectedYear]),
+      pool.query(highestSalesItemQuery, [compcode, selectedYear]),
+      pool.query(lowestSalesItemQuery, [compcode, selectedYear]),
+    ]);
+
+    const lowestSalesPeriod = lowestSalesPeriodResult[0] || null;
+    const highestSalesPeriod = highestSalesPeriodResult[0] || null;
+    const highestSalesItem = highestSalesItemResult[0] || null;
+    const lowestSalesItem = lowestSalesItemResult[0] || null;
+
+    return res.json({
+      statusCode: 0,
+      data: {
+        lowestSalesPeriod: lowestSalesPeriod
+          ? {
+              payPeriod: lowestSalesPeriod.payperiod,
+              totalSales: Number(lowestSalesPeriod.totalsales || 0),
+            }
+          : null,
+
+        highestSalesPeriod: highestSalesPeriod
+          ? {
+              payPeriod: highestSalesPeriod.payperiod,
+              totalSales: Number(highestSalesPeriod.totalsales || 0),
+            }
+          : null,
+
+        highestSalesItem: highestSalesItem
+          ? {
+              financialYear: highestSalesItem.finyr,
+              itemName: highestSalesItem.itemname,
+              totalSales: Number(highestSalesItem.totalsales || 0),
+            }
+          : null,
+
+        lowestSalesItem: lowestSalesItem
+          ? {
+              financialYear: lowestSalesItem.finyr,
+              itemName: lowestSalesItem.itemname,
+              totalSales: Number(lowestSalesItem.totalsales || 0),
+            }
+          : null,
+      },
+    });
+  } catch (err) {
+    console.error("Error retrieving lowest and highest sales:", err);
+
+    return res.status(500).json({
+      statusCode: 1,
+      error: "Internal Server Error",
+    });
   }
 }

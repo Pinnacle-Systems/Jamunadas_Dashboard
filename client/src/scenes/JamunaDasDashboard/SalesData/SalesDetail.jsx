@@ -17,6 +17,7 @@ import TopMonthSales from "./TopMonthSales.jsx";
 import TopWeekSales from "./TopWeekSales.jsx";
 import SlowMovement from "./SlowMovement.jsx";
 import AverageIncome from "./AverageSales.jsx";
+import MonthHighLowSales from "./MonthHighLowSales.jsx";
 const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
   console.log(selectedFilter, "selectedFilter");
 
@@ -319,6 +320,18 @@ const SalesDetail = ({ selectedYear, selectedCompany, selectedFilter }) => {
       <Grid container>
         <Grid item xs={12} md={12}>
           <SlowMovement
+            finYrData={finYrData}
+            yearFilter={yearFilter}
+            selectedCompany={company}
+            setYearFilter={setYearFilter}
+            filterType={filterType}
+            setFilterType={setFilterType}
+          />
+        </Grid>
+      </Grid>
+      <Grid container>
+        <Grid item xs={12} md={12}>
+          <MonthHighLowSales
             finYrData={finYrData}
             yearFilter={yearFilter}
             selectedCompany={company}
